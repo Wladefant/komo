@@ -1795,11 +1795,14 @@ textarea {
   top: 0;
   bottom: auto;
 }
+/* The lazy toolbar has no inline shell size, so the swap must live in CSS too. */
 .morphing-menu[data-vertical="true"] .morphing-menu__shell {
   left: 0;
   top: 0;
   bottom: auto;
   translate: none;
+  width: var(--mm-bar-height);
+  height: var(--mm-bar-width);
 }
 .morphing-menu[data-edge="right"] .morphing-menu__shell {
   left: auto;
