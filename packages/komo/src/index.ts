@@ -591,21 +591,37 @@ export function initComments(options: CommentsOptions): CommentsController {
   let pageTransitioning = false;
 
   function placeToolbar(p: Placement) {
+    // Keep the requested placement. A temporarily smaller viewport (rotation,
+    // mobile browser chrome, a narrow window) clamps the toolbar on screen
+    // without forgetting where the reviewer put it.
+    toolbarPlacement = p;
+    // The open mobile sheet owns the toolbar at the bottom centre.
+    if (compactSidebar && expanded) return;
     // React mounts the drawer after its host; retain the saved coordinates until it has a size.
     if (!toolbar.offsetWidth || !toolbar.offsetHeight) return;
-    toolbarPlacement = constrain(
+    const shown = constrain(
       p,
       toolbar.offsetWidth,
       toolbar.offsetHeight,
       document.documentElement.clientWidth,
       window.innerHeight,
     );
-    toolbar.style.left = `${toolbarPlacement.x + toolbar.offsetWidth / 2}px`;
-    if (toolbarPlacement.edgeY === "bottom" && !compactSidebar) {
+    const center = shown.x + toolbar.offsetWidth / 2;
+    // Docked edges also clear the device safe area (notch, home indicator).
+    toolbar.style.left =
+      p.edgeX === "left"
+        ? `calc(${center}px + env(safe-area-inset-left,0px))`
+        : p.edgeX === "right"
+          ? `calc(${center}px - env(safe-area-inset-right,0px))`
+          : `${center}px`;
+    if (p.edgeY === "bottom") {
       toolbar.style.top = "auto";
       toolbar.style.bottom = "calc(16px + env(safe-area-inset-bottom,0px))";
     } else {
-      toolbar.style.top = `${toolbarPlacement.y}px`;
+      toolbar.style.top =
+        p.edgeY === "top"
+          ? `calc(${shown.y}px + env(safe-area-inset-top,0px))`
+          : `${shown.y}px`;
       toolbar.style.bottom = "auto";
     }
   }
@@ -2114,12 +2130,17 @@ export function initComments(options: CommentsOptions): CommentsController {
     );
     if (compactSidebar) {
       undockEdgeTabs();
-      Object.assign(toolbar.style, {
-        left: "50%",
-        top: "auto",
-        bottom: "calc(16px + env(safe-area-inset-bottom,0px))",
-        transform: "translateX(-50%)",
-      });
+      toolbar.style.transform = "translateX(-50%)";
+      // A dragged toolbar keeps its spot; only the open mobile sheet docks it
+      // at the bottom centre. The same placement also decides its orientation
+      // below, so position and shape can never disagree.
+      if (toolbarPlacement && !expanded) placeToolbar(toolbarPlacement);
+      else
+        Object.assign(toolbar.style, {
+          left: "50%",
+          top: "auto",
+          bottom: "calc(16px + env(safe-area-inset-bottom,0px))",
+        });
     } else if (edgeSidebar) {
       // The drawer owns its placement at the edge; the background dock spring
       // does not apply in edge mode. Skip while a morph owns left/top/size.
@@ -2260,11 +2281,11 @@ export function initComments(options: CommentsOptions): CommentsController {
           )
         : items,
       alignEnd:
-        expanded && edgeSidebar
+        expanded && (edgeSidebar || compactSidebar)
           ? false
           : !!toolbarPlacement && toolbarPlacement.y > window.innerHeight / 2,
       edge:
-        expanded && edgeSidebar
+        expanded && (edgeSidebar || compactSidebar)
           ? "bottom"
           : (toolbarPlacement?.edgeX ??
             toolbarPlacement?.edgeY ??
@@ -4858,6 +4879,10 @@ export function initComments(options: CommentsOptions): CommentsController {
       syncResponsiveSidebar();
       scalePage();
       if (!compactSidebar) renderToolbar();
+      // Mobile browser chrome and rotation resize the viewport constantly;
+      // re-clamp a dragged toolbar without re-rendering the menu.
+      else if (toolbarPlacement && toolbar.dataset.dragging !== "true")
+        placeToolbar(toolbarPlacement);
       geometry();
     },
     { signal: abort.signal },

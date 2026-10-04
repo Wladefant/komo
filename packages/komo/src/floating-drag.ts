@@ -89,6 +89,15 @@ export function floatingDrag(
           for (const animation of element.getAnimations()) animation.cancel();
           element.dataset.dragging = "true";
           moved = true;
+          // Own the pointer for the rest of the drag. Without capture the
+          // release lands on whatever is under the finger or cursor, such as
+          // an edge-hover sensor that then opens a sidebar instead of docking.
+          // Taken only once dragging starts so plain taps still click.
+          try {
+            handle.setPointerCapture(event.pointerId);
+          } catch {
+            /* The pointer may already be gone; window listeners still end it. */
+          }
         }
         e.preventDefault();
         const dt = e.timeStamp - lastT;
@@ -149,19 +158,21 @@ export function floatingDrag(
             ],
             { duration: 320, easing: "cubic-bezier(.22,1,.36,1)" }
           );
-        handle.addEventListener(
-          "click",
-          (e) => {
-            e.preventDefault();
-            e.stopImmediatePropagation();
-          },
-          { capture: true, once: true }
-        );
+        // Swallow only the click this release itself produces. Touch drags
+        // produce none, so a lingering `once` listener would eat the next tap.
+        const swallow = (e: Event) => {
+          e.preventDefault();
+          e.stopImmediatePropagation();
+        };
+        handle.addEventListener("click", swallow, { capture: true, once: true });
+        setTimeout(() => handle.removeEventListener("click", swallow, true), 0);
       };
       cleanup = () => {
         window.removeEventListener("pointermove", move, true);
         window.removeEventListener("pointerup", end, true);
         window.removeEventListener("pointercancel", end, true);
+        if (handle.hasPointerCapture?.(event.pointerId))
+          handle.releasePointerCapture(event.pointerId);
         delete element.dataset.dragging;
         delete element.dataset.snapX;
         delete element.dataset.snapY;
