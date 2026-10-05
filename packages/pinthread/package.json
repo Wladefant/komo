@@ -52,7 +52,7 @@
     "./dist/picker-*.js"
   ],
   "scripts": {
-    "build": "node scripts/build.mjs && pnpm run build:setup && pnpm run build:node",
+    "build": "node scripts/build.mjs && pnpm run build:setup && pnpm run build:node && pnpm run build:landing",
     "prepack": "pnpm run build",
     "typecheck": "wrangler types --config server/wrangler.jsonc server/worker-configuration.d.ts && tsc -p tsconfig.json --noEmit && tsc -p server/tsconfig.json",
     "test": "pnpm run build:setup && vitest run --config vitest.config.ts",
@@ -64,7 +64,8 @@
     "size": "node scripts/measure.mjs",
     "bench": "node scripts/bench.mjs",
     "test:package": "pnpm run build && node scripts/check-package.mjs",
-    "build:node": "esbuild server/node.ts --bundle --platform=node --format=esm --packages=external --loader:.txt=text --outfile=dist/node.mjs && node scripts/copy-sql.mjs"
+    "build:node": "esbuild server/node.ts --bundle --platform=node --format=esm --packages=external --loader:.txt=text --outfile=dist/node.mjs && node scripts/copy-sql.mjs",
+    "build:landing": "esbuild src/landing-browser.ts --bundle --format=esm --minify --outfile=dist/landing-bundle.js"
   },
   "repository": {
     "type": "git",
