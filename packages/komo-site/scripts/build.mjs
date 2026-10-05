@@ -87,11 +87,11 @@ await writeFile(
 );
 await writeFile(
   new URL("_headers", out),
-  `/*\n  X-Content-Type-Options: nosniff\n  Referrer-Policy: strict-origin-when-cross-origin\n  Permissions-Policy: camera=(), microphone=(), geolocation=()\n  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://cdn.jsdelivr.net https://komo.offbr.co; frame-src 'self'; font-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'self'\n/assets/*\n  Cache-Control: public, max-age=3600\n`
+  `/fake-github/*\n  ! Content-Security-Policy\n  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://github.githubassets.com; img-src 'self' data: https:; font-src 'self' https://github.githubassets.com; connect-src 'self' https://komo.offbr.co; object-src 'none'; frame-ancestors 'self'\n/*\n  X-Content-Type-Options: nosniff\n  Referrer-Policy: strict-origin-when-cross-origin\n  Permissions-Policy: camera=(), microphone=(), geolocation=()\n  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://cdn.jsdelivr.net https://komo.offbr.co; frame-src 'self'; font-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'self'\n/assets/*\n  Cache-Control: public, max-age=3600\n`
 );
 await writeFile(
   new URL("robots.txt", out),
-  "User-agent: *\nAllow: /\nSitemap: https://komo.offbr.co/sitemap.xml\n"
+  "User-agent: *\nAllow: /\nDisallow: /fake-github/\nSitemap: https://komo.offbr.co/sitemap.xml\n"
 );
 await writeFile(
   new URL("sitemap.xml", out),
@@ -102,6 +102,7 @@ const bundle = await build({
   entryNames: "[name]-[hash]",
   entryPoints: {
     site: new URL("../src/site.ts", import.meta.url).pathname,
+    "demo-github": new URL("../src/demo/github.ts", import.meta.url).pathname,
   },
   outdir: new URL("assets/", out).pathname,
   bundle: true,
@@ -129,4 +130,16 @@ for (const path of [
       .replaceAll("/assets/site.css", assetUrl(scriptOutput.cssBundle))
   );
 }
+const demoScript = Object.keys(bundle.metafile.outputs).find((path) =>
+  /demo-github-[^/]*\.js$/.test(path)
+);
+const demoDir = new URL("fake-github/", out);
+await mkdir(demoDir, { recursive: true });
+await writeFile(
+  new URL("index.html", demoDir),
+  (await readFile(new URL("../src/demo/github.html", import.meta.url), "utf8")).replace(
+    "</body>",
+    `<script type="module" src="${assetUrl(demoScript)}"></script></body>`
+  )
+);
 console.log(`Built ${pages.length} pages with the shared komo demo.`);
