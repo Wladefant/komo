@@ -7,6 +7,7 @@
  * Guest comments are on for the default project, so the flow signs in as a guest named "QA Guest" (nothing external).
  * The request guard allows loopback and still aborts every production and unknown host (request-guard.e2e.ts).
  * Issue: https://github.com/Wladefant/komo/issues/23
+ * Touch hit areas (44 px or more): https://github.com/Wladefant/komo/issues/32, https://github.com/Wladefant/komo/issues/31
  */
 import { test } from '@e2e-dev/web';
 import { expect } from 'e2e';
@@ -58,6 +59,46 @@ test('pin, reply and resolve: a guest places a pin, replies and resolves it, and
     if (!done(last)) throw new Error(`Timed out waiting for ${what}; last value ${JSON.stringify(last)}`);
     return last;
   };
+  // The engine taps with a mouse, so the page always matches a fine pointer. To check the touch hit areas, copy the
+  // widget's own `@media (pointer: coarse)` rules into an unconditional style, hit-test each control from its centre
+  // with elementFromPoint along both axes, then remove the copy before the tap.
+  const expectTouchTargets = async (selectors: string[]): Promise<void> => {
+    const areas = await browser.evaluate((list: string[]) => {
+      const root = document.querySelector('[data-branch-comments]')!.shadowRoot!;
+      const coarse = document.createElement('style');
+      coarse.textContent = [...root.querySelectorAll('style')]
+        .flatMap((style) => [...(style.sheet?.cssRules ?? [])])
+        .filter((rule) => rule instanceof CSSMediaRule && rule.media.mediaText === '(pointer: coarse)')
+        .flatMap((rule) => [...(rule as CSSMediaRule).cssRules].map((inner) => inner.cssText))
+        .join('\n');
+      root.append(coarse);
+      try {
+        return list.map((selector) => {
+          const target = root.querySelector(selector);
+          if (!target) return { selector, width: 0, height: 0 };
+          const box = target.getBoundingClientRect();
+          const x = box.left + box.width / 2;
+          const y = box.top + box.height / 2;
+          const owns = (dx: number, dy: number): boolean => {
+            const hit = root.elementFromPoint(x + dx, y + dy);
+            return !!hit && target.contains(hit);
+          };
+          const reach = (step: (n: number) => boolean): number => {
+            let n = 0;
+            while (n < 80 && step(n + 1)) n++;
+            return n;
+          };
+          const width = reach((n) => owns(-n, 0)) + reach((n) => owns(n, 0)) + 1;
+          const height = reach((n) => owns(0, -n)) + reach((n) => owns(0, n)) + 1;
+          return { selector, width, height };
+        });
+      } finally {
+        coarse.remove();
+      }
+    }, selectors);
+    // Every control is found, and none is under 44 px on either axis. A failure names the control and its size.
+    expect(areas.filter((area) => area.width < 44 || area.height < 44)).toEqual([]);
+  };
 
   expect(await server()).toEqual([]);
 
@@ -73,6 +114,8 @@ test('pin, reply and resolve: a guest places a pin, replies and resolves it, and
   const catcher = browser.locator('.catch');
   await expect(catcher).toBeVisible();
   await catcher.tap({ position: spot });
+  await expect(screen.getByRole('textbox', { name: 'Comment' })).toBeVisible();
+  await expectTouchTargets(['.draft-close', '.new-comment-composer .send']);
   await screen.getByRole('textbox', { name: 'Comment' }).fill(pinText);
   await screen.getByRole('button', { name: 'Post comment' }).tap();
   await screen.getByRole('textbox', { name: 'Your name' }).fill('QA Guest');
@@ -120,11 +163,20 @@ test('pin, reply and resolve: a guest places a pin, replies and resolves it, and
     await until(reveal, (found) => found, `this thread's card in the widget (for ${inner})`);
     const control = browser.locator(`[data-thread="${threadId}"] ${inner}`);
     await expect(control).toBeVisible();
+    await expectTouchTargets([`[data-thread="${threadId}"] ${inner}`]);
     await control.tap();
   };
 
   // Reply: open this thread's card, write, send.
   await tapInThread('.thread-card');
+  await expect(screen.getByRole('textbox', { name: 'Reply' })).toBeVisible();
+  await expectTouchTargets([
+    '.dialog-head [aria-label="Comment actions"]',
+    '.dialog-head [aria-label="Resolve comment"]',
+    '.dialog-head [aria-label="Close comment"]',
+    '.message-reaction',
+    '.reply-composer .send',
+  ]);
   await screen.getByRole('textbox', { name: 'Reply' }).fill(replyText);
   await screen.getByRole('button', { name: 'Send reply' }).tap();
   const afterReply = await until(server, (list) => (list[0]?.comments.length ?? 0) === 2, 'the reply on the server');
