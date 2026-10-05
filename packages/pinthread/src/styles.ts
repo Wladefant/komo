@@ -2456,4 +2456,37 @@ textarea {
 @media (prefers-reduced-motion:reduce) {
   :host([data-sidebar="mobile"]) .panel { transition:none; }
 }
+/* Touch: give the small dialog and card icons a 44px hit area. The icons keep their size. */
+@media (pointer: coarse) {
+  .dialog-head .icon,
+  .approved-site > .icon,
+  .message > .row > .comment-menu > summary,
+  .dialog .new-comment-composer .draft-body .send { position: relative; }
+  .dialog-head .icon::after,
+  .draft-close::after,
+  .approved-site > .icon::after,
+  .message-reaction::after,
+  .message > .row > .comment-menu > summary::after,
+  .thread-item > .card-resolve::after,
+  .dialog .send::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: max(100%, 44px);
+    height: max(100%, 44px);
+    translate: -50% -50%;
+  }
+  /* Edge icons grow inward, so the hit area stays inside the dialog. */
+  .dialog-head .icon::after,
+  .approved-site > .icon::after { left: auto; right: 0; translate: 0 -50%; }
+  /* Keep the head above the drag handle, and keep neighbouring hit areas apart. */
+  .dialog-head { z-index: 3; }
+  .dialog-head .row { gap: 20px; }
+  .message:first-child > .row { padding-right: 116px; }
+  .message:first-child .message-reaction,
+  .message:has(> .row > .comment-menu) .message-reaction { margin-top: 20px; }
+  .dialog:has(.draft-close) .new-comment-composer .draft-body { row-gap: 19px; }
+  .approved-site { min-height: 44px; }
+}
 `;
