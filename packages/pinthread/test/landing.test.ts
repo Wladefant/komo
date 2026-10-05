@@ -29,6 +29,12 @@ describe("node landing page", () => {
     expect(await get("/widget/nested/index.js", dist)).toBeNull();
   });
 
+  it("answers /favicon.ico with 204 and no body", async () => {
+    const response = await get("/favicon.ico");
+    expect(response?.status).toBe(204);
+    expect(await response!.text()).toBe("");
+  });
+
   it("leaves API routes and non-GET methods to the worker", async () => {
     expect(await get("/threads")).toBeNull();
     expect(await get("/health")).toBeNull();

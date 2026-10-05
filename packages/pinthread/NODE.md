@@ -55,6 +55,8 @@ The `--origin` value must be one approved preview origin. Each PR needs the same
 
 `GET /` serves a small demo page with the widget mounted. The page passes `endpoint: location.origin`, so it never uses the package default host. `/widget/*.js` serves the built bundle from the image. The demo uses the project key in `PINTHREAD_DEMO_PROJECT` (default `pinthread_demo`). The page is enabled only when that key exists in `PROJECTS`; otherwise `/` behaves as before. Add the key with the server's own origin in `origins`, for example `"pinthread_demo":{"repo":"your-org/your-repo","origins":["https://comments.example.com"],"allowGuests":true}`.
 
+`GET /favicon.ico` returns 204 with no body while the page is enabled, so browsers stop logging a 400 from the API. The page's Content Security Policy allows only same-origin scripts. A proxy that injects inline scripts, such as Cloudflare JavaScript Detections (Bot Fight Mode), gets blocked and logs one console error; the widget still works.
+
 ## Database boundary
 
 The API's storage contract is `prepare().bind().first()/all()/run()` plus atomic `batch()`. `server/postgres.ts` implements it with a PostgreSQL pool, parameterized statements, and one transaction per batch. `server/postgres/001_initial.sql` mirrors the current SQLite schema and its quota, revision, retention, and deletion triggers. Add a numbered PostgreSQL migration whenever the D1 schema changes. Existing D1 migrations and the Worker entry point stay separate. The Node server runs the same request handler; transport and storage are the only new adapters.

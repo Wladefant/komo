@@ -27,6 +27,11 @@ export async function landing(
         "Cache-Control": "no-cache",
       },
     });
+  if (pathname === "/favicon.ico")
+    return new Response(null, {
+      status: 204,
+      headers: { "Cache-Control": "public, max-age=86400" },
+    });
   const file = /^\/widget\/([\w.-]+\.js)$/.exec(pathname)?.[1];
   if (!file || file.includes("..")) return null;
   try {
