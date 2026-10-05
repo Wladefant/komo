@@ -62,9 +62,18 @@ test('pin, reply and resolve: a guest places a pin, replies and resolves it, and
   // The engine taps with a mouse, so the page always matches a fine pointer. To check the touch hit areas, copy the
   // widget's own `@media (pointer: coarse)` rules into an unconditional style, hit-test each control from its centre
   // with elementFromPoint along both axes, then remove the copy before the tap.
+  // The thread dialog opens with a 250 ms size animation that holds its height. The copied rules add spacing, so a
+  // measurement inside that animation sees a clipped message list. Wait for every finite widget animation to end
+  // first: a phone has the coarse rules from the start, so the settled layout is the one a user taps.
   const expectTouchTargets = async (selectors: string[]): Promise<void> => {
-    const areas = await browser.evaluate((list: string[]) => {
+    const areas = await browser.evaluate(async (list: string[]) => {
       const root = document.querySelector('[data-branch-comments]')!.shadowRoot!;
+      await Promise.all(
+        root
+          .getAnimations()
+          .filter((animation) => animation.effect?.getComputedTiming().endTime !== Infinity)
+          .map((animation) => animation.finished.catch(() => undefined)),
+      );
       const coarse = document.createElement('style');
       coarse.textContent = [...root.querySelectorAll('style')]
         .flatMap((style) => [...(style.sheet?.cssRules ?? [])])
