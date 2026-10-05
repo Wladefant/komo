@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Pinthread e2e fixture</title>
+  </head>
+  <body>
+    <main id="main">
+      <h1 id="fixture-heading">Fixture page</h1>
+      <p id="fixture-target">Pin a comment on this paragraph.</p>
+    </main>
+    <script type="module">
+      import { initPinthread } from "/pinthread/index.js";
+      // The API runs on the loopback host that e2e/serve.mjs starts. Nothing else is reachable: the request guard
+      // allows exactly this origin, and every production and unknown host stays denied.
+      const api = new URLSearchParams(location.search).get("api") ?? "http://127.0.0.1:8788";
+      window.__pinthread = initPinthread({
+        endpoint: api,
+        project: "pinthread",
+        // The local API pins project "pinthread" to this repo (server/wrangler.jsonc PROJECTS); on a loopback host the
+        // widget always uses its local channel, so the branch it sends is "local".
+        repo: "tjcages/pinthread",
+        branch: "local",
+        scope: "branch",
+        // The dock hides away from the pointer by default (opacity 0, pointer-events none), so a tap lands on <html>.
+        // The site sets the same option; a test that taps the dock needs it visible.
+        autoHideDrawer: false,
+      });
+    </script>
+  </body>
+</html>
