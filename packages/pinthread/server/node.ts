@@ -4,10 +4,12 @@ import { isIP } from "node:net";
 import { postgresDatabase } from "./postgres";
 import worker from "./index";
 import { sitePattern } from "./validation";
+import { landing } from "./landing";
 
 const databaseUrl = process.env.DATABASE_URL;
 const projects = process.env.PROJECTS;
 const publicUrl = process.env.PUBLIC_URL;
+const demoProject = process.env.PINTHREAD_DEMO_PROJECT ?? "pinthread_demo";
 if (!databaseUrl || !projects || !publicUrl)
   throw Error("DATABASE_URL, PUBLIC_URL, and PROJECTS are required");
 const origin = new URL(publicUrl);
@@ -39,6 +41,7 @@ if (
 ) {
   throw Error("PROJECTS must map project keys to repo and origins");
 }
+const landingEnabled = Object.hasOwn(configured, demoProject);
 const db = postgresDatabase(databaseUrl);
 await db.migrate();
 const env = {
@@ -58,6 +61,19 @@ const server = createServer(async (incoming, outgoing) => {
     if (url.origin !== publicUrl) {
       outgoing.writeHead(400);
       outgoing.end();
+      return;
+    }
+    const page = landingEnabled
+      ? await landing(
+          { method: incoming.method ?? "GET", pathname: url.pathname },
+          demoProject,
+        )
+      : null;
+    if (page) {
+      outgoing.writeHead(page.status, Object.fromEntries(page.headers));
+      outgoing.end(
+        incoming.method === "HEAD" ? undefined : Buffer.from(await page.arrayBuffer()),
+      );
       return;
     }
     const headers = new Headers();

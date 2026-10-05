@@ -51,6 +51,10 @@ pinthread comments resolve THREAD_ID --endpoint https://comments.example.com --p
 
 The `--origin` value must be one approved preview origin. Each PR needs the same branch value in widget and bot to isolate its feedback. On the same project, an owner can edit approved sites after Google sign-in. Wildcard origins match one hostname label only, so `pr-*.preview.example.com` does not allow arbitrary subdomains of `example.com`.
 
+## Landing page
+
+`GET /` serves a small demo page with the widget mounted. The page passes `endpoint: location.origin`, so it never uses the package default host. `/widget/*.js` serves the built bundle from the image. The demo uses the project key in `PINTHREAD_DEMO_PROJECT` (default `pinthread_demo`). The page is enabled only when that key exists in `PROJECTS`; otherwise `/` behaves as before. Add the key with the server's own origin in `origins`, for example `"pinthread_demo":{"repo":"your-org/your-repo","origins":["https://comments.example.com"],"allowGuests":true}`.
+
 ## Database boundary
 
 The API's storage contract is `prepare().bind().first()/all()/run()` plus atomic `batch()`. `server/postgres.ts` implements it with a PostgreSQL pool, parameterized statements, and one transaction per batch. `server/postgres/001_initial.sql` mirrors the current SQLite schema and its quota, revision, retention, and deletion triggers. Add a numbered PostgreSQL migration whenever the D1 schema changes. Existing D1 migrations and the Worker entry point stay separate. The Node server runs the same request handler; transport and storage are the only new adapters.
