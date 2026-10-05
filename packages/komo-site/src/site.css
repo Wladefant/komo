@@ -814,7 +814,7 @@ summary {
 .scene-stage[data-story="1"] { --agent-color:#b4d3fe; --target-left:37.5%; --target-top:88.5%; --target-width:16%; --target-height:6%; }
 .scene-stage[data-story="2"] { --agent-color:#bce2c5; --target-left:20%; --target-top:2.5%; --target-width:37%; --target-height:6%; }
 .scene-target { position:absolute; left:var(--target-left); top:var(--target-top); width:var(--target-width); height:var(--target-height); border-radius:5px; background:color-mix(in srgb,var(--agent-color) 9%,transparent); box-shadow:0 0 0 1.5px var(--agent-color); transition:left 450ms cubic-bezier(.16,1,.3,1),top 450ms cubic-bezier(.16,1,.3,1),width 450ms cubic-bezier(.16,1,.3,1),height 450ms cubic-bezier(.16,1,.3,1),opacity 200ms ease; pointer-events:none; }
-/* Figma multiplayer treatment, using the existing Untitled UI cursor geometry. */
+/* Figma multiplayer treatment, using the Lucide cursor geometry. */
 .agent-cursor {
   --cursor-color: #9747ff;
   position: absolute;

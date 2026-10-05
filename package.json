@@ -11,6 +11,7 @@
     "test": "pnpm --filter @tjcages/komo test",
     "typecheck": "pnpm -r typecheck",
     "size": "pnpm --filter @tjcages/komo size",
+    "check:licenses": "node --test scripts/check-licenses.test.mjs && node scripts/check-licenses.mjs",
     "dev": "pnpm --filter komo-site dev",
     "dev:api": "pnpm --filter @tjcages/komo dev:api",
     "deploy:site": "pnpm --filter komo-site run deploy",

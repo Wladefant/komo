@@ -298,7 +298,7 @@ Tests use real workerd and isolated SQLite databases. To publish this repository
 
 ## Credits
 
-The dock adapts [Danny Williams’s morphing menu](https://dannyjpwilliams.com/playground/morphing-menu/). Icons come from [Untitled UI](https://github.com/untitleduico/icons). See [NOTICE.md](./NOTICE.md) for attribution.
+The dock is original komo code. Icons come from [Lucide](https://lucide.dev) (ISC). See [NOTICE.md](./NOTICE.md) for attribution.
 
 ## License
 

@@ -68,7 +68,7 @@ export function drawerPresence(
       pointer.x <= rect.right + 72 &&
       pointer.y >= rect.top - 72 &&
       pointer.y <= rect.bottom + 72;
-    const menu = toolbar.querySelector(".morphing-menu");
+    const menu = toolbar.querySelector(".dock");
     const focused =
       toolbar.getRootNode() instanceof ShadowRoot &&
       toolbar.contains((toolbar.getRootNode() as ShadowRoot).activeElement);
@@ -96,7 +96,7 @@ export function drawerPresence(
       if (!toolbar.dataset.away || keepOpen()) return;
       setDirection();
       // Establish the just-offscreen position before enabling the entrance transition.
-      const menu = toolbar.querySelector<HTMLElement>(".morphing-menu");
+      const menu = toolbar.querySelector<HTMLElement>(".dock");
       if (menu) getComputedStyle(menu).translate;
       delete toolbar.dataset.introWait;
       toolbar.dataset.peek = "true";
