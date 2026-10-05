@@ -1,5 +1,9 @@
 # pinthread
 
+Project stage: live
+
+The widget is embedded in our live sites, so compatibility rules apply. This stays `live` until the operator says it has no real users. This repo is a fork: no pull requests or pushes go to `tjcages/komo`.
+
 - Product and brand name: **pinthread**, always lowercase. Preserve public API names such as `initPinthread`.
 - Package, CLI, API and tests: `packages/pinthread/`. Marketing website: `packages/pinthread-site/`.
 - Use pnpm with Node 22.12 or later. Run `pnpm build`, `pnpm typecheck`, `pnpm test`, and `pnpm size` before delivery.
@@ -8,6 +12,20 @@
 - Preserve API authentication, project boundaries, quotas, and data compatibility.
 - Deliver changes on a feature branch with a pull request and a verified deployed preview. Use preview versions of the existing `pinthread-site` Worker; do not use Cloudflare Pages. Never merge without approval. Validate locally; hosted CI is not a delivery gate.
 - Keep user-facing copy concise and use the existing components and motion conventions.
+
+## Change loop
+
+Shared policy: section 14 of [the default policy](https://github.com/Wladefant/super-board/blob/main/policies/default/AGENTS.md). On every change, in this order:
+
+1. Docs first. Leave no contradiction.
+2. Tests for the behaviour, seen failing before the fix.
+3. The smallest implementation.
+4. Clean up what the change made unused. Ask when unsure.
+5. The done report names the tests you ran and ends with `Deleted:` and `Not run:` (each a list or `none`).
+
+## Lessons
+
+Newest first. One `When X, do Y` line per operator correction, at most 20. The same mistake twice means rewrite the line, not add one. Over 20: merge duplicates, drop outdated lines, show the operator.
 
 ## Linear tracking
 
