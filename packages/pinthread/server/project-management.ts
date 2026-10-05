@@ -1,6 +1,6 @@
 import { importProject } from "./import-project";
 import { projectSites, saveProjectSites } from "./project-sites";
-import { check, string } from "./validation";
+import { canonicalProject, check, string } from "./validation";
 import { googleOwner } from "./workspaces";
 import type { Identity } from "../src/types";
 
@@ -87,7 +87,8 @@ export async function manageProject(
       fixed: [],
     });
   if (path === "/project/sites" && request.method === "PATCH") {
-    const managed = url.searchParams.get("project") === "_pinthread";
+    const managed =
+      canonicalProject(url.searchParams.get("project")) === "_pinthread";
     const sites = await saveProjectSites(
       env,
       project,

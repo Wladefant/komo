@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 import { spawn } from "node:child_process";
 import { createInterface } from "node:readline/promises";
 import { randomUUID, randomBytes, createHash } from "node:crypto";
-import { branchName, clientModule, gitValue, repository } from "./config.mjs";
+import { branchName, clientModule, gitValue, repository, withLegacyEnv } from "./config.mjs";
 
 import { installAgentWorkflow } from "./workflow.mjs";
 import { agentCommands, agentHelp, runAgent } from "./agent.mjs";
@@ -61,11 +61,13 @@ async function request(endpoint, path, data) {
   return result;
 }
 async function sync() {
-  const settings = JSON.parse(await readFile(settingsPath, "utf8"));
+  const legacyPath = resolve(cwd, ".komo/project.json");
+  const source = (await exists(settingsPath)) ? settingsPath : legacyPath;
+  const settings = JSON.parse(await readFile(source, "utf8"));
   const config = { ...settings };
   delete config.origin;
   if (config.scope === "branch") {
-    config.branch = branchName(process.env, cwd);
+    config.branch = branchName(withLegacyEnv(process.env), cwd);
     if (!config.branch)
       throw Error("Cannot detect the branch. Set PINTHREAD_BRANCH for this build.");
   }

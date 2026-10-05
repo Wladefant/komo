@@ -87,6 +87,11 @@ export function initPinthread(config: PinthreadConfig): CommentsController {
   return initComments(resolveConfig(config));
 }
 
+/** @deprecated Pre-rename name for initPinthread. */
+export const initKomo = initPinthread;
+/** @deprecated Pre-rename name for PinthreadConfig. */
+export type KomoConfig = PinthreadConfig;
+
 /** Mount once on the client. The returned destroy() restores the host page. */
 export function initComments(options: CommentsOptions): CommentsController {
   const noop: CommentsController = {
