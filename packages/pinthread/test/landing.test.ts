@@ -2,7 +2,7 @@ import { mkdtemp, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { landing, landingScript } from "../server/landing";
+import { landing } from "../server/landing";
 
 const get = (pathname: string, dist?: string) =>
   landing({ method: "GET", pathname }, "pinthread_demo", dist);
@@ -13,16 +13,8 @@ describe("node landing page", () => {
     expect(response?.status).toBe(200);
     expect(response?.headers.get("content-type")).toContain("text/html");
     const html = await response!.text();
-    expect(html).toContain('src="/landing.js"');
+    expect(html).toContain('src="/widget/landing-bundle.js" data-project="pinthread_demo"');
     expect(html).not.toContain("pinthread.dev");
-  });
-
-  it("points the widget at its own origin and never at the package default host", async () => {
-    const script = await (await get("/landing.js"))!.text();
-    expect(script).toBe(landingScript("pinthread_demo"));
-    expect(script).toContain("endpoint: location.origin");
-    expect(script).toContain('project: "pinthread_demo"');
-    expect(script).not.toContain("pinthread.dev");
   });
 
   it("serves bundle files from the dist directory only", async () => {
