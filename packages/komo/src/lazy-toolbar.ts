@@ -1,14 +1,14 @@
-import type { MenuItem, MorphingMenuProps } from "./MorphingMenu.js";
+import type { DockItem, DockProps } from "./Dock.js";
 import { button, el, icon, type icons } from "./dom.js";
 import type { Identity } from "./types.js";
 
 export type ToolbarIcon =
   | { glyph: keyof typeof icons }
   | { user: Identity | null };
-export type ToolbarItem = Omit<MenuItem, "icon" | "activeIcon" | "children"> & {
+export type ToolbarItem = Omit<DockItem, "icon"> & {
   icon: ToolbarIcon;
 };
-export type ToolbarProps = Omit<MorphingMenuProps, "items"> & {
+export type ToolbarProps = Omit<DockProps, "items"> & {
   items: readonly ToolbarItem[];
 };
 
@@ -60,11 +60,11 @@ export function createToolbar(
         if (disposed) return;
         const focused = (element.getRootNode() as ShadowRoot)
           .activeElement as HTMLElement | null;
-        const focusId = focused?.dataset.menuItem;
+        const focusId = focused?.dataset.dockItem;
         mounted = module.mountToolbar(element, props);
         if (focusId)
           element
-            .querySelector<HTMLElement>(`[data-menu-item="${focusId}"]`)
+            .querySelector<HTMLElement>(`[data-dock-item="${focusId}"]`)
             ?.focus({ preventScroll: true });
       })
       .catch(() => {
@@ -82,7 +82,7 @@ export function createToolbar(
         mounted.render(props);
         return;
       }
-      const nav = el("nav", "morphing-menu");
+      const nav = el("nav", "dock");
       nav.setAttribute("aria-label", props.label ?? "Website review");
       nav.dataset.view = "collapsed";
       nav.dataset.edge = props.edge ?? "bottom";
@@ -90,10 +90,10 @@ export function createToolbar(
         props.edge === "left" || props.edge === "right",
       );
       nav.dataset.alignEnd = String(!!props.alignEnd);
-      const items = props.items.filter((item) => item.showInBar !== false);
-      nav.style.setProperty("--mm-count", String(items.length + 1));
-      const shell = el("div", "morphing-menu__shell"),
-        bar = el("div", "morphing-menu__bar");
+      const items = props.items.filter((item) => !item.sheetOnly);
+      nav.style.setProperty("--dock-count", String(items.length + 1));
+      const shell = el("div", "dock__surface"),
+        bar = el("div", "dock__bar");
       for (const item of items) {
         const control = button(
           item.label,
@@ -101,10 +101,10 @@ export function createToolbar(
             item.onSelect?.();
             void load();
           },
-          "morphing-menu__shortcut",
+          "dock__button",
         );
         control.title = item.label;
-        control.dataset.menuItem = item.id;
+        control.dataset.dockItem = item.id;
         if (item.id === props.activeId)
           control.setAttribute("aria-current", "page");
         control.replaceChildren(glyph(item.id));
@@ -116,16 +116,16 @@ export function createToolbar(
           void load().then(() => {
             if (mounted)
               element
-                .querySelector<HTMLButtonElement>('[data-menu-item="more"]')
+                .querySelector<HTMLButtonElement>('[data-dock-item="more"]')
                 ?.click();
             else {
               more.title = "Could not load menu. Tap to retry.";
               more.setAttribute("aria-label", more.title);
             }
           }),
-        "morphing-menu__shortcut",
+        "dock__button",
       );
-      more.dataset.menuItem = "more";
+      more.dataset.dockItem = "more";
       more.setAttribute("aria-expanded", "false");
       more.replaceChildren(icon("drawer"));
       bar.append(more);

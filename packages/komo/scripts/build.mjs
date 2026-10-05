@@ -2,6 +2,7 @@ import { build, transform } from "esbuild";
 import { minify } from "terser";
 import { fileURLToPath } from "node:url";
 import { execFileSync } from "node:child_process";
+import { createRequire } from "node:module";
 import { readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 
@@ -30,9 +31,18 @@ const { iconMarkup } = await import(
   `data:text/javascript;base64,${Buffer.from(iconModule.outputFiles[0].text).toString("base64")}`
 );
 await rm("dist", { recursive: true, force: true });
-execFileSync("tsc", ["-p", "tsconfig.json", "--emitDeclarationOnly"], {
-  stdio: "inherit",
-});
+// Run the TypeScript compiler through Node so the build also works on Windows,
+// where the `tsc` shim is a .cmd file that execFileSync cannot start.
+execFileSync(
+  process.execPath,
+  [
+    createRequire(import.meta.url).resolve("typescript/bin/tsc"),
+    "-p",
+    "tsconfig.json",
+    "--emitDeclarationOnly",
+  ],
+  { stdio: "inherit" },
+);
 const result = await build({
   entryPoints: [
     "src/index.ts",

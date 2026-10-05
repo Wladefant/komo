@@ -7,8 +7,7 @@ import {
 } from "react";
 import { createRoot } from "react-dom/client";
 import { HexColorInput, HexColorPicker } from "react-colorful";
-import { Plus } from "@untitledui/icons/Plus";
-import { el } from "./dom.js";
+import { el, icons } from "./dom.js";
 
 const PRESETS = [
   ["Lavender", "#c8b5f4"],
@@ -98,7 +97,10 @@ function AccentPicker({
           aria-pressed={custom}
           onClick={() => setOpen(!open)}
         >
-          <Plus aria-hidden="true" />
+          <span
+            style={{ display: "contents" }}
+            dangerouslySetInnerHTML={{ __html: icons.plus }}
+          />
         </button>
       </div>
       <div

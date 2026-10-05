@@ -1041,7 +1041,7 @@ export function initComments(options: CommentsOptions): CommentsController {
       presence.update();
     },
     () => !expanded,
-    (target) => !!target.closest(".morphing-menu__shortcut"),
+    (target) => !!target.closest(".dock__button"),
   );
 
   const toolbarSize = new ResizeObserver(() => {
@@ -1680,15 +1680,13 @@ export function initComments(options: CommentsOptions): CommentsController {
     } else if (dialogs.parentElement === sidebar) pinPreview.before(dialogs);
   }
   function drawerShell() {
-    return (
-      toolbar.querySelector<HTMLElement>(".morphing-menu__shell") ?? toolbar
-    );
+    return toolbar.querySelector<HTMLElement>(".dock__surface") ?? toolbar;
   }
   function drawerMenu() {
-    return toolbar.querySelector<HTMLElement>(".morphing-menu");
+    return toolbar.querySelector<HTMLElement>(".dock");
   }
   function drawerBar() {
-    return toolbar.querySelector<HTMLElement>(".morphing-menu__bar");
+    return toolbar.querySelector<HTMLElement>(".dock__bar");
   }
   function edgeRows() {
     return [
@@ -2206,7 +2204,7 @@ export function initComments(options: CommentsOptions): CommentsController {
       },
       {
         id: "account",
-        expandedOrder: -1,
+        sheetOrder: -1,
         label: api.user
           ? `${api.user.name} · Account`
           : options.onboarding?.inProject
@@ -2224,20 +2222,20 @@ export function initComments(options: CommentsOptions): CommentsController {
       },
       {
         id: "copy-prompts",
-        keepOpenOnSelect: true,
+        stayOpen: true,
         label:
           copiedPrompt === "all"
             ? "Copied prompt"
             : "Copy all comments for agent",
         icon: glyph(copiedPrompt === "all" ? "check" : "copy"),
-        showInBar: false,
+        sheetOnly: true,
         onSelect: () => run(() => copyPrompt("all")),
       },
       {
         id: "visibility",
         label: hidden ? "Show comment pins" : "Hide comment pins",
         icon: glyph("comment"),
-        showInBar: false,
+        sheetOnly: true,
         onSelect: () => {
           hidden = !hidden;
           renderPins();
@@ -2250,7 +2248,7 @@ export function initComments(options: CommentsOptions): CommentsController {
         id: "retry",
         label: `${issue?.title ?? "Offline"} · Retry`,
         icon: glyph("branch"),
-        showInBar: false,
+        sheetOnly: true,
         onSelect: retryConnection,
       });
     toolbarRoot.render({
@@ -2554,7 +2552,7 @@ export function initComments(options: CommentsOptions): CommentsController {
         continue;
       }
       if (card) continue;
-      card = el("div", "morphing-menu__tooltip sidebar-tip");
+      card = el("div", "dock-hint sidebar-tip");
       card.dataset.tip = id;
       const node = card;
       card.append(
@@ -2858,7 +2856,7 @@ export function initComments(options: CommentsOptions): CommentsController {
       head.append(title, searchPanel);
       // Header icon tooltips reuse the toolbar's tooltip surface. It lives at
       // the shadow root so the sidebar's park/peek transforms can't offset it.
-      const tip = el("div", "morphing-menu__tooltip sidebar-tooltip");
+      const tip = el("div", "dock-hint sidebar-tooltip");
       tip.setAttribute("aria-hidden", "true");
       shadow.append(tip);
       let tipTimer = 0;

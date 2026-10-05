@@ -1,7 +1,7 @@
 import { createRoot } from "react-dom/client";
 import { flushSync } from "react-dom";
 import { createElement } from "react";
-import { MorphingMenu } from "./MorphingMenu.js";
+import { Dock } from "./Dock.js";
 import type { ToolbarProps, ToolbarIcon } from "./lazy-toolbar.js";
 import { icons, initials } from "./dom.js";
 
@@ -26,7 +26,7 @@ function glyph(value: ToolbarIcon): ReturnType<typeof createElement> {
   );
 }
 const view = (props: ToolbarProps) =>
-  createElement(MorphingMenu, {
+  createElement(Dock, {
     ...props,
     items: props.items.map((item) => ({ ...item, icon: glyph(item.icon) })),
   });

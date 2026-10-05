@@ -1,26 +1,29 @@
-import { Copy01 } from "@untitledui/icons/Copy01";
-import { ChevronSelectorVertical } from "@untitledui/icons/ChevronSelectorVertical";
-import { ChevronDown } from "@untitledui/icons/ChevronDown";
-import { Edit05 } from "@untitledui/icons/Edit05";
-import { Trash01 } from "@untitledui/icons/Trash01";
-import { type ComponentType, type SVGProps, type ReactNode } from "react";
-import { staticSvg } from "./static-svg.js";
-import { InfoCircle } from "@untitledui/icons/InfoCircle";
-import { DotsHorizontal } from "@untitledui/icons/DotsHorizontal";
-import { User01 } from "@untitledui/icons/User01";
-import { SearchLg } from "@untitledui/icons/SearchLg";
-import { Plus } from "@untitledui/icons/Plus";
-import { MessageChatCircle } from "@untitledui/icons/MessageChatCircle";
-import { PointerIcon } from "./PointerIcon.js";
-import { LayoutRight } from "@untitledui/icons/LayoutRight";
-import { XClose } from "@untitledui/icons/XClose";
-import { Check } from "@untitledui/icons/Check";
-import { ArrowUp } from "@untitledui/icons/ArrowUp";
-import { Link01 } from "@untitledui/icons/Link01";
-import { Code02 } from "@untitledui/icons/Code02";
-import { SmileIcon } from "./SmileIcon.js";
-import { GitBranch01 } from "@untitledui/icons/GitBranch01";
-// Icon components are shared by the DOM and React surfaces.
+import {
+  ArrowUp,
+  Check,
+  ChevronDown,
+  ChevronsUpDown,
+  CodeXml,
+  Copy,
+  Ellipsis,
+  GitBranch,
+  Info,
+  Link,
+  MessageCircle,
+  MousePointer2,
+  PanelRight,
+  PencilLine,
+  Plus,
+  Search,
+  Smile,
+  Trash2,
+  User,
+  X,
+  type IconNode,
+} from "lucide";
+
+// Lucide (ISC) icon data, serialized once. The package build evaluates this
+// module and inlines the SVG strings, so browser code never loads Lucide.
 export type IconName =
   | "chevron"
   | "drawer"
@@ -42,41 +45,62 @@ export type IconName =
   | "code"
   | "smile"
   | "branch";
-export const components: Record<
-  IconName,
-  ComponentType<SVGProps<SVGSVGElement>>
-> = {
+
+export const iconNodes: Record<IconName, IconNode> = {
   chevron: ChevronDown,
-  drawer: ChevronSelectorVertical,
-  edit: Edit05,
-  trash: Trash01,
-  info: InfoCircle,
-  more: DotsHorizontal,
-  person: User01,
-  search: SearchLg,
+  drawer: ChevronsUpDown,
+  edit: PencilLine,
+  trash: Trash2,
+  info: Info,
+  more: Ellipsis,
+  person: User,
+  search: Search,
   plus: Plus,
-  comment: MessageChatCircle,
-  copy: Copy01,
-  pointer: PointerIcon,
-  expand: LayoutRight,
-  close: XClose,
+  comment: MessageCircle,
+  copy: Copy,
+  pointer: MousePointer2,
+  expand: PanelRight,
+  close: X,
   check: Check,
   arrow: ArrowUp,
-  link: Link01,
-  code: Code02,
-  smile: SmileIcon,
-  branch: GitBranch01,
+  link: Link,
+  code: CodeXml,
+  smile: Smile,
+  branch: GitBranch,
 };
 
-// This module is evaluated by the package build, leaving only SVG strings in
-// browser code. Source consumers can still evaluate the same pinned icons.
+const escapeAttribute = (value: string | number) =>
+  String(value).replace(
+    /[&"<>]/g,
+    (character) =>
+      ({ "&": "&amp;", '"': "&quot;", "<": "&lt;", ">": "&gt;" })[character]!,
+  );
+
+const attributes = (values: Record<string, string | number | undefined>) =>
+  Object.entries(values)
+    .filter(([, value]) => value !== undefined)
+    .map(([name, value]) => ` ${name}="${escapeAttribute(value!)}"`)
+    .join("");
+
+/** Serialize Lucide icon data to a decorative, currentColor SVG string. */
+export function iconSvg(node: IconNode): string {
+  const children = node
+    .map(([tag, values]) => `<${tag}${attributes(values)}></${tag}>`)
+    .join("");
+  return `<svg${attributes({
+    xmlns: "http://www.w3.org/2000/svg",
+    width: 24,
+    height: 24,
+    viewBox: "0 0 24 24",
+    fill: "none",
+    stroke: "currentColor",
+    "stroke-width": 2,
+    "stroke-linecap": "round",
+    "stroke-linejoin": "round",
+    "aria-hidden": "true",
+  })}>${children}</svg>`;
+}
+
 export const iconMarkup = Object.fromEntries(
-  Object.entries(components).map(([name, component]) => [
-    name,
-    staticSvg(
-      (component as (props: SVGProps<SVGSVGElement>) => ReactNode)({
-        "aria-hidden": true,
-      }),
-    ),
-  ]),
+  Object.entries(iconNodes).map(([name, node]) => [name, iconSvg(node)]),
 ) as Record<IconName, string>;

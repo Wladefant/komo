@@ -11,7 +11,7 @@ it("peeks the top half from the viewport bottom, without slicing the dock", () =
   vi.useFakeTimers();
   vi.stubGlobal("matchMedia", () => ({ matches: true }));
   const toolbar = document.createElement("div");
-  toolbar.innerHTML = '<div class="morphing-menu" data-view="collapsed"></div>';
+  toolbar.innerHTML = '<div class="dock" data-view="collapsed"></div>';
   document.body.append(toolbar);
   vi.spyOn(toolbar, "getBoundingClientRect").mockReturnValue({
     left: 300,

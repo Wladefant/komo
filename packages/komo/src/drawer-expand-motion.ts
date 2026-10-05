@@ -47,7 +47,7 @@ export function compressedDrawerSize(barWidth: number, barHeight: number) {
   };
 }
 
-/** Bottom-center anchor, matching `.morphing-menu__shell`. */
+/** Bottom-center anchor, matching `.dock__surface`. */
 export function boxFromAnchor(
   anchorX: number,
   anchorBottom: number,

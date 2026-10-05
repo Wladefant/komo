@@ -1,46 +1,63 @@
 import { build } from "esbuild";
 import { mkdir, writeFile, readFile, rm, cp } from "node:fs/promises";
 import { createRequire } from "node:module";
+import { fileURLToPath } from "node:url";
 import { pages, escape } from "../src/content.mjs";
 const require = createRequire(
   new URL("../../komo/package.json", import.meta.url)
 );
-const { createElement } = require("react");
-const { renderToStaticMarkup } = require("react-dom/server");
+// Lucide (ISC) icon data, serialized at build time; the site ships SVG strings.
+const lucide = require("lucide");
 const names = {
-  copy: "Copy01",
+  copy: "Copy",
   check: "Check",
-  pointer: "Cursor01",
-  multiplayer: "Cursor02",
-  comment: "MessageChatCircle",
-  code: "Code02",
+  pointer: "MousePointer2",
+  multiplayer: "MousePointer",
+  comment: "MessageCircle",
+  code: "CodeXml",
   plus: "Plus",
-  menu: "Menu01",
-  close: "XClose",
+  menu: "Menu",
+  close: "X",
   arrow: "ArrowUpRight",
-  pause: "PauseCircle",
-  play: "PlayCircle",
-  replay: "RefreshCcw01",
-  dots: "DotsHorizontal",
-  smile: "FaceSmile",
+  pause: "CirclePause",
+  play: "CirclePlay",
+  replay: "RefreshCcw",
+  dots: "Ellipsis",
+  smile: "Smile",
   terminal: "Terminal",
-  cloud: "Cloud01",
-  overview: "LayoutAlt01",
-  install: "Download01",
-  settings: "Sliders04",
-  help: "HelpCircle",
+  cloud: "Cloud",
+  overview: "LayoutDashboard",
+  install: "Download",
+  settings: "SlidersHorizontal",
+  help: "CircleHelp",
 };
+const svgAttributes = (values) =>
+  Object.entries(values)
+    .map(([key, value]) => ` ${key}="${escape(String(value))}"`)
+    .join("");
 const icons = Object.fromEntries(
-  Object.entries(names).map(([key, name]) => [
-    key,
-    renderToStaticMarkup(
-      createElement(require(`@untitledui/icons/${name}`)[name], {
+  Object.entries(names).map(([key, name]) => {
+    const node = lucide[name];
+    if (!node) throw new Error(`Unknown Lucide icon ${name}`);
+    const shapes = node
+      .map(([tag, values]) => `<${tag}${svgAttributes(values)}></${tag}>`)
+      .join("");
+    return [
+      key,
+      `<svg${svgAttributes({
+        xmlns: "http://www.w3.org/2000/svg",
         width: 18,
         height: 18,
-        "aria-hidden": true,
-      })
-    ),
-  ])
+        viewBox: "0 0 24 24",
+        fill: "none",
+        stroke: "currentColor",
+        "stroke-width": 2,
+        "stroke-linecap": "round",
+        "stroke-linejoin": "round",
+        "aria-hidden": "true",
+      })}>${shapes}</svg>`,
+    ];
+  })
 );
 const decorate = (html) =>
   html.replace(
@@ -101,10 +118,12 @@ const bundle = await build({
   metafile: true,
   entryNames: "[name]-[hash]",
   entryPoints: {
-    site: new URL("../src/site.ts", import.meta.url).pathname,
-    "demo-github": new URL("../src/demo/github.ts", import.meta.url).pathname,
+    site: fileURLToPath(new URL("../src/site.ts", import.meta.url)),
+    "demo-github": fileURLToPath(
+      new URL("../src/demo/github.ts", import.meta.url)
+    ),
   },
-  outdir: new URL("assets/", out).pathname,
+  outdir: fileURLToPath(new URL("assets/", out)),
   bundle: true,
   splitting: true,
   format: "esm",

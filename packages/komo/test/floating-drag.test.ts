@@ -37,7 +37,7 @@ describe("floating placement", () => {
 
   it("drags from a toolbar tab but keeps a tap as a click", () => {
     const dom = new JSDOM(
-      '<div id="toolbar"><button class="morphing-menu__shortcut">Comments</button></div>',
+      '<div id="toolbar"><button class="dock__button">Comments</button></div>',
     );
     const { window } = dom;
     vi.stubGlobal("window", window);
@@ -60,7 +60,7 @@ describe("floating placement", () => {
       undefined,
       undefined,
       () => true,
-      (target) => !!target.closest(".morphing-menu__shortcut"),
+      (target) => !!target.closest(".dock__button"),
     );
     const pointer = (
       type: string,
