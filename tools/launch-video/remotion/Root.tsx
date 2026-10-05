@@ -20,7 +20,7 @@ export function RemotionRoot() {
         />
       ))}
       <Composition
-        id="komo-promo"
+        id="pinthread-promo"
         component={Film}
         durationInFrames={edit.cuts.reduce(
           (sum, cut) => sum + cut.out - cut.in,

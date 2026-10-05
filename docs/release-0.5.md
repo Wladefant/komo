@@ -1,4 +1,4 @@
-# komo 0.5.0 release candidate
+# pinthread 0.5.0 release candidate
 
 This branch prepares 0.5.0. The registry already contains 0.4.1; reusing that version would prevent publication. Preparing the version does not publish it or approve production rollout.
 
@@ -14,7 +14,7 @@ This branch prepares 0.5.0. The registry already contains 0.4.1; reusing that ve
 
 Cookie sharing now requires explicit `sessionDomain` configuration across trusted hosts. Default sessions stay on the current host. Existing endpoint-scoped local sessions migrate; legacy cookie-only sessions may require one sign-in. HTTP development stores sessions locally without bearer cookies.
 
-komo no longer inserts a body-content wrapper. It can frame a sole existing content root, or an explicit mounted `pageRoot` with a layout box. Multi-root pages and `display: contents` use Floating until configured with a suitable root. Passing body, html, or an unmounted root is rejected. The website's explicit root retains its existing Frame behavior.
+pinthread no longer inserts a body-content wrapper. It can frame a sole existing content root, or an explicit mounted `pageRoot` with a layout box. Multi-root pages and `display: contents` use Floating until configured with a suitable root. Passing body, html, or an unmounted root is rejected. The website's explicit root retains its existing Frame behavior.
 
 ## Rollout
 

@@ -2,15 +2,15 @@ import { readFileSync, writeFileSync } from "node:fs";
 import { parseHTML } from "linkedom";
 import { build } from "esbuild";
 import { resolve } from "node:path";
-const root = resolve(process.argv[2] || "../komo");
+const root = resolve(process.argv[2] || "../pinthread");
 await build({
-  entryPoints: [root + "/packages/komo/src/agent-prompt.ts"],
-  outfile: "/tmp/komo-agent-prompt.mjs",
+  entryPoints: [root + "/packages/pinthread/src/agent-prompt.ts"],
+  outfile: "/tmp/pinthread-agent-prompt.mjs",
   bundle: true,
   platform: "node",
   format: "esm",
 });
-const { agentPrompt } = await import("/tmp/komo-agent-prompt.mjs");
+const { agentPrompt } = await import("/tmp/pinthread-agent-prompt.mjs");
 const n = JSON.parse(
   readFileSync(root + "/tools/launch-video/remotion/native.json"),
 );
@@ -54,12 +54,12 @@ if (first) {
 }
 const extra = {
   shortcuts: [...doc(n.bar).querySelectorAll("button")].map((b) => b.outerHTML),
-  symbol: readFileSync(root + "/packages/komo-site/public/favicon.svg", "utf8"),
+  symbol: readFileSync(root + "/packages/pinthread-site/public/favicon.svg", "utf8"),
   prompt: agentPrompt(threads, {
     project: "launch-fixture",
-    repo: "komo/launch-fixture",
+    repo: "pinthread/launch-fixture",
     branch: "demo",
-    origin: "https://komo.example",
+    origin: "https://pinthread.example",
   }),
 };
 writeFileSync(

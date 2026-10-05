@@ -1,4 +1,4 @@
-# komo 0.3 release checks
+# pinthread 0.3 release checks
 
 ## Features
 
@@ -18,7 +18,7 @@ Production consumer bundle, minified and gzipped:
 | All optional features | 180,423 bytes | about 186,000 bytes |
 | Installed icon dependency | 19 MB | removed |
 
-The compact drawer is immediately functional; its expanded React UI loads on intent. The install bundles only the Untitled icons used by komo, retaining their license. The initial bundle budget is now 100 KB gzip. All-feature size rises slightly for project management.
+The compact drawer is immediately functional; its expanded React UI loads on intent. The install bundles only the Untitled icons used by pinthread, retaining their license. The initial bundle budget is now 100 KB gzip. All-feature size rises slightly for project management.
 
 The local browser stress fixture has 5,000 elements, 250 comments, and changes 100 text nodes per frame for 180 frames. At the same desktop viewport:
 
@@ -50,7 +50,7 @@ Physical iPhone Safari, Android Chrome, and assistive-technology testing remain 
 
 Apply migration `0011_project_management.sql` before deploying the API. Existing projects retain link access. Existing Google users must sign in again to provide a verified email before accepting an invitation.
 
-Self-hosted customers update the package and run `komo deploy`; it copies and applies new packaged migrations before deployment. Roll back Worker code if necessary; the additive tables can remain. Do not reverse schema or restore a database over new customer writes without a separate recovery plan.
+Self-hosted customers update the package and run `pinthread deploy`; it copies and applies new packaged migrations before deployment. Roll back Worker code if necessary; the additive tables can remain. Do not reverse schema or restore a database over new customer writes without a separate recovery plan.
 
 ## 0.3.2 beta audit
 
@@ -59,8 +59,8 @@ Self-hosted customers update the package and run `komo deploy`; it copies and ap
 - Account and usage headings follow h2/h3 hierarchy. Automated axe scans cover guest account, owner settings, and cleanup confirmation; these do not replace screen-reader usability testing.
 - All 10 built marketing pages have valid internal page and fragment links.
 - Production dependency audit reports zero known advisories. This is not a comprehensive security certification.
-- Build, type checks, 91 tests, and size budgets pass. A clean 0.3.2 tarball install exposes initKomo/initComments and CLI schema.
-- Physical devices are excluded at the user's request. Testing uses the dedicated komo Beta QA iOS 26.5 simulator and desktop Chromium.
+- Build, type checks, 91 tests, and size budgets pass. A clean 0.3.2 tarball install exposes initPinthread/initComments and CLI schema.
+- Physical devices are excluded at the user's request. Testing uses the dedicated pinthread Beta QA iOS 26.5 simulator and desktop Chromium.
 - Automated axe scans report no violations for the corrected homepage, install, configuration, hosting, agent prompts, FAQ, guest account, owner account, and cleanup confirmation states.
 - Marketing captions and muted inline code now meet the audited contrast thresholds without changing layout.
 - First-comment onboarding preserves the draft, asks for the guest name after Send, and creates the original comment after Continue; verified in the local browser fixture.

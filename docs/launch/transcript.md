@@ -10,4 +10,4 @@ Silent-first, 42 seconds. The captions describe the choreographed fixture demons
 - **20–26s:** Paste the context into your coding agent. The agent edits the code.
 - **26–30s:** The headline gets more space. The primary button gets a lavender fill.
 - **30–35s:** Verify the changes, reply with the result, and resolve the feedback.
-- **35–42s:** Install komo. Get your project key with komo init. komo.offbr.co
+- **35–42s:** Install pinthread. Get your project key with pinthread init. pinthread.dev

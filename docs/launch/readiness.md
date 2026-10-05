@@ -4,18 +4,18 @@ Verification date: 2026-09-17. This is evidence, not a launch approval.
 
 ## Product
 
-komo keeps website feedback attached to elements or areas, with discussions and an explicit handoff to a coding agent. The README is the product overview and source for setup guidance. Product name stays lowercase. Preserve the existing visual system, customer data, project boundaries, and authentication behavior.
+pinthread keeps website feedback attached to elements or areas, with discussions and an explicit handoff to a coding agent. The README is the product overview and source for setup guidance. Product name stays lowercase. Preserve the existing visual system, customer data, project boundaries, and authentication behavior.
 
-- [Website](https://komo.offbr.co/)
-- [Repository](https://github.com/tjcages/komo)
-- [npm](https://www.npmjs.com/package/@tjcages/komo)
-- [Install](https://komo.offbr.co/install/), [configuration](https://komo.offbr.co/configuration/), [hosting](https://komo.offbr.co/hosting/), [agent workflow](https://komo.offbr.co/agent-prompts/)
+- [Website](https://pinthread.dev/)
+- [Repository](https://github.com/Wladefant/pinthread)
+- [npm](https://www.npmjs.com/package/pinthread)
+- [Install](https://pinthread.dev/install/), [configuration](https://pinthread.dev/configuration/), [hosting](https://pinthread.dev/hosting/), [agent workflow](https://pinthread.dev/agent-prompts/)
 
 ## Verified implementation milestones
 
-- [PR #9](https://github.com/tjcages/komo/pull/9) merged as `0758e6a`: React hook, peer declarations, option types, and public project-key guidance. Publication is a separate milestone.
-- [PR #6](https://github.com/tjcages/komo/pull/6): same-domain hosted API and OAuth routing. Website Worker retains the `KOMO_API` service binding.
-- [PR #8](https://github.com/tjcages/komo/pull/8): final navigation logo sizing. This launch work leaves that production geometry unchanged.
+- [PR #9](https://github.com/Wladefant/pinthread/pull/9) merged as `0758e6a`: React hook, peer declarations, option types, and public project-key guidance. Publication is a separate milestone.
+- [PR #6](https://github.com/Wladefant/pinthread/pull/6): same-domain hosted API and OAuth routing. Website Worker retains the `PINTHREAD_API` service binding.
+- [PR #8](https://github.com/Wladefant/pinthread/pull/8): final navigation logo sizing. This launch work leaves that production geometry unchanged.
 - Private projects, invitations, export/import, cleanup, optimistic writes, and CLI have implementation and test evidence in `docs/release-0.3.md`. Do not confuse that historical evidence with new device testing.
 
 ## Release verification
@@ -56,8 +56,8 @@ Physical-phone testing is excluded by user instruction. Prior simulator evidence
 
 ## Published release evidence
 
-- npm publication succeeded for `@tjcages/komo@0.4.0`; `latest` resolves to 0.4.0. Registry integrity: `sha512-IE7Ne4Ir+XpXZB8eoespu7XhwaikpH+SRkq/i6Jis08ztOp1Bg1pu7lrgD8UV6ndjWVtWVnTNrHY3nF87fPO6A==`.
-- Production website Worker version: `67849e9a-40fc-4819-9597-abf1d6a41979`. Live install HTML includes `useKomo` and `@tjcages/komo/react`; configuration HTML includes the Type column. `/health` returns `{"ok":true}`. The `KOMO_API` service binding remains intact; no API or database deployment was needed.
+- npm publication succeeded for `pinthread@0.4.0`; `latest` resolves to 0.4.0. Registry integrity: `sha512-IE7Ne4Ir+XpXZB8eoespu7XhwaikpH+SRkq/i6Jis08ztOp1Bg1pu7lrgD8UV6ndjWVtWVnTNrHY3nF87fPO6A==`.
+- Production website Worker version: `67849e9a-40fc-4819-9597-abf1d6a41979`. Live install HTML includes `usePinthread` and `pinthread/react`; configuration HTML includes the Type column. `/health` returns `{"ok":true}`. The `PINTHREAD_API` service binding remains intact; no API or database deployment was needed.
 - A second empty-directory install fetched 0.4.0 from npm, loaded both exports, rendered the hook on the server, and executed CLI schema.
 - Browser fixture built from that registry install: React Strict Mode mounts one tool; disabling removes it; re-enabling remounts one tool. The fixture uses isolated data, not public demo comments.
 - Real hosted setup: the registry CLI completed `init`, opened the hosted account, created a temporary QA project through the existing Google owner, and wrote the project key/configuration and agent instructions. A separate CLI Google OAuth flow completed through the same-domain callback. `project info` and `comments list` returned successful scoped responses with zero threads.
@@ -66,7 +66,7 @@ Physical-phone testing is excluded by user instruction. Prior simulator evidence
 
 ## Follow-up found during cleanup
 
-`komo logout` returns 404 after its project has already been deleted, leaving the local credential file. Server-side sessions are removed by project deletion, so this is a local cleanup/UX issue. Reproduce with a disposable project; accept 404 during logout and remove its local session file, with a regression test. Tracked in OFF-676.
+`pinthread logout` returns 404 after its project has already been deleted, leaving the local credential file. Server-side sessions are removed by project deletion, so this is a local cleanup/UX issue. Reproduce with a disposable project; accept 404 during logout and remove its local session file, with a regression test. Tracked in OFF-676.
 
 ## September 22 package readiness follow-up
 

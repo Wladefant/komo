@@ -1,26 +1,26 @@
-# komo public beta review
+# pinthread public beta review
 
 Current review: the 20.9-second Remotion promo. Linear is connected and organized; Google branding review remains pending. No merge or social post is approved by this document.
 
-- **[Remotion promo](https://427324ea-komo-site.off-brand.workers.dev/promo/)** · [MP4](https://427324ea-komo-site.off-brand.workers.dev/promo/komo-promo.mp4) · [Source](../../tools/launch-video/remotion/README.md)
-- [Previous rendered asset gallery](https://4adc4b37.komo-wb5.pages.dev/launch-assets/)
-- [Draft PR #28](https://github.com/tjcages/komo/pull/28)
+- **[Remotion promo](https://427324ea-pinthread-site.off-brand.workers.dev/promo/)** · [MP4](https://427324ea-pinthread-site.off-brand.workers.dev/promo/pinthread-promo.mp4) · [Source](../../tools/launch-video/remotion/README.md)
+- [Previous rendered asset gallery](https://4adc4b37.pinthread-wb5.pages.dev/launch-assets/)
+- [Draft PR #28](https://github.com/Wladefant/pinthread/pull/28)
 
 ## Previous film pass (historical assets)
 
 | Asset | Review/download |
 | --- | --- |
-| Landscape master, 42s | [1920×1080 MP4](https://4adc4b37.komo-wb5.pages.dev/launch-assets/komo-landscape.mp4) |
-| Composed portrait, 42s | [1080×1920 MP4](https://4adc4b37.komo-wb5.pages.dev/launch-assets/komo-vertical.mp4) |
-| Teaser, 12s | [1920×1080 MP4](https://4adc4b37.komo-wb5.pages.dev/launch-assets/komo-teaser.mp4) |
-| Thumbnail | [Landscape PNG](https://4adc4b37.komo-wb5.pages.dev/launch-assets/komo-landscape-thumbnail.png) |
+| Landscape master, 42s | [1920×1080 MP4](https://4adc4b37.pinthread-wb5.pages.dev/launch-assets/pinthread-landscape.mp4) |
+| Composed portrait, 42s | [1080×1920 MP4](https://4adc4b37.pinthread-wb5.pages.dev/launch-assets/pinthread-vertical.mp4) |
+| Teaser, 12s | [1920×1080 MP4](https://4adc4b37.pinthread-wb5.pages.dev/launch-assets/pinthread-teaser.mp4) |
+| Thumbnail | [Landscape PNG](https://4adc4b37.pinthread-wb5.pages.dev/launch-assets/pinthread-landscape-thumbnail.png) |
 | Captions | [SRT](./captions.srt) |
 | Transcript | [Transcript](./transcript.md) |
 | Announcement drafts | [Three options, thread, replies, counts](./copy.md) |
 | Render source and commands | [Remotion README](../../tools/launch-video/remotion/README.md) |
 | Verification | [Asset QA](./qa.md), [media hashes](./render-evidence.json), [release readiness](./readiness.md) |
 
-Rendered media lives in the sibling `../komo-promo/out/`, outside Git. No customer comments were used. Recording dependencies live outside the npm/browser runtime.
+Rendered media lives in the sibling `../pinthread-promo/out/`, outside Git. No customer comments were used. Recording dependencies live outside the npm/browser runtime.
 
 ## Tracking
 

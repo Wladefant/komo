@@ -1,0 +1,54 @@
+{
+  "name": "pinthread-site",
+  "account_id": "944ca70087298faa2e84783db46162c5",
+  "compatibility_date": "2026-09-16",
+  "assets": {
+    "directory": "./dist",
+    "html_handling": "auto-trailing-slash",
+    "not_found_handling": "404-page",
+    "binding": "ASSETS",
+    "run_worker_first": [
+      "/auth",
+      "/auth/*",
+      "/config",
+      "/config/*",
+      "/health",
+      "/health/*",
+      "/setup",
+      "/setup/*",
+      "/setup-client.js",
+      "/setup-client.js/*",
+      "/usage",
+      "/usage/*",
+      "/me",
+      "/me/*",
+      "/threads",
+      "/threads/*",
+      "/project",
+      "/project/*",
+      "/owner",
+      "/owner/*",
+      "/workspace",
+      "/workspace/*",
+    ],
+  },
+  "routes": [
+    {
+      "pattern": "pinthread.dev",
+      "custom_domain": true,
+    },
+  ],
+  // Workers Builds uploads non-production branches as preview versions with a
+  // branch alias; production traffic on pinthread.dev is unaffected.
+  "preview_urls": true,
+  "observability": {
+    "enabled": true,
+  },
+  "main": "worker/index.ts",
+  "services": [
+    {
+      "binding": "PINTHREAD_API",
+      "service": "pinthread-api",
+    },
+  ],
+}
