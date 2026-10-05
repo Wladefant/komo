@@ -2486,7 +2486,7 @@ textarea {
   .message:first-child > .row { padding-right: 116px; }
   .message:first-child .message-reaction,
   .message:has(> .row > .comment-menu) .message-reaction { margin-top: 20px; }
-  .dialog:has(.draft-close) .new-comment-composer .draft-body { row-gap: 15px; }
+  .dialog:has(.draft-close) .new-comment-composer .draft-body { row-gap: 19px; }
   .approved-site { min-height: 44px; }
 }
 `;
