@@ -23,19 +23,19 @@ CREATE TABLE project_quotas (
 CREATE TRIGGER comment_quota_insert AFTER INSERT ON comments BEGIN
   UPDATE project_quotas SET comments=comments+1, bytes=bytes+length(CAST(NEW.body AS BLOB))+256
     WHERE project=(SELECT project FROM threads WHERE id=NEW.thread_id);
-  SELECT RAISE(ABORT, 'pinthread_quota_exceeded') WHERE EXISTS(SELECT 1 FROM project_quotas WHERE project=(SELECT project FROM threads WHERE id=NEW.thread_id) AND (comments>max_comments OR bytes>max_bytes));
+  SELECT RAISE(ABORT, 'komo_quota_exceeded') WHERE EXISTS(SELECT 1 FROM project_quotas WHERE project=(SELECT project FROM threads WHERE id=NEW.thread_id) AND (comments>max_comments OR bytes>max_bytes));
 END;
 CREATE TRIGGER comment_quota_update AFTER UPDATE OF body ON comments BEGIN
   UPDATE project_quotas SET bytes=bytes+length(CAST(NEW.body AS BLOB))-length(CAST(OLD.body AS BLOB)) WHERE project=(SELECT project FROM threads WHERE id=NEW.thread_id);
-  SELECT RAISE(ABORT, 'pinthread_quota_exceeded') WHERE EXISTS(SELECT 1 FROM project_quotas WHERE project=(SELECT project FROM threads WHERE id=NEW.thread_id) AND bytes>max_bytes);
+  SELECT RAISE(ABORT, 'komo_quota_exceeded') WHERE EXISTS(SELECT 1 FROM project_quotas WHERE project=(SELECT project FROM threads WHERE id=NEW.thread_id) AND bytes>max_bytes);
 END;
 CREATE TRIGGER thread_quota_insert AFTER INSERT ON threads BEGIN
   UPDATE project_quotas SET bytes=bytes+length(CAST(NEW.anchor AS BLOB))+length(CAST(NEW.page AS BLOB))+length(CAST(NEW.branch AS BLOB))+512 WHERE project=NEW.project;
-  SELECT RAISE(ABORT, 'pinthread_quota_exceeded') WHERE EXISTS(SELECT 1 FROM project_quotas WHERE project=NEW.project AND bytes>max_bytes);
+  SELECT RAISE(ABORT, 'komo_quota_exceeded') WHERE EXISTS(SELECT 1 FROM project_quotas WHERE project=NEW.project AND bytes>max_bytes);
 END;
 CREATE TRIGGER thread_quota_update AFTER UPDATE OF anchor ON threads BEGIN
   UPDATE project_quotas SET bytes=bytes+length(CAST(NEW.anchor AS BLOB))-length(CAST(OLD.anchor AS BLOB)) WHERE project=NEW.project;
-  SELECT RAISE(ABORT, 'pinthread_quota_exceeded') WHERE EXISTS(SELECT 1 FROM project_quotas WHERE project=NEW.project AND bytes>max_bytes);
+  SELECT RAISE(ABORT, 'komo_quota_exceeded') WHERE EXISTS(SELECT 1 FROM project_quotas WHERE project=NEW.project AND bytes>max_bytes);
 END;
 CREATE TABLE setup_requests (
   id TEXT PRIMARY KEY,

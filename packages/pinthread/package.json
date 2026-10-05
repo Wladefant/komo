@@ -68,7 +68,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Wladefant/pinthread.git",
+    "url": "git+https://github.com/Wladefant/komo.git",
     "directory": "packages/pinthread"
   },
   "publishConfig": {
@@ -104,7 +104,7 @@
   },
   "homepage": "https://pinthread.dev",
   "bugs": {
-    "url": "https://github.com/Wladefant/pinthread/issues"
+    "url": "https://github.com/Wladefant/komo/issues"
   },
   "peerDependencies": {
     "react": "^18.2.0 || ^19.0.0",

@@ -6,8 +6,10 @@ type SetupResult = {
   token: string;
   user: Identity;
 };
-const key = (options: CommentsOptions) =>
-  `pinthread:setup:${options.endpoint}:${options.onboarding?.code}`;
+const key = (options: CommentsOptions, prefix = "pinthread") =>
+  `${prefix}:setup:${options.endpoint}:${options.onboarding?.code}`;
+// Project keys issued before the rename start with komo_ and stay valid.
+const projectKey = /^(pinthread|komo)_[a-f0-9]{32}$/;
 
 /** Retain only public settings so a reload before CLI sync can resume commenting. */
 export function rememberProject(options: CommentsOptions, result: SetupResult) {
@@ -23,10 +25,14 @@ export function rememberProject(options: CommentsOptions, result: SetupResult) {
 export function resumeProject(options: CommentsOptions): CommentsOptions {
   if (!options.onboarding?.inProject) return options;
   try {
-    const saved = JSON.parse(localStorage.getItem(key(options)) || "null");
+    const saved = JSON.parse(
+      localStorage.getItem(key(options)) ||
+        localStorage.getItem(key(options, "komo")) ||
+        "null",
+    );
     if (
       typeof saved?.project === "string" &&
-      saved.project.startsWith("pinthread_") &&
+      /^(pinthread|komo)_/.test(saved.project) &&
       typeof saved.repo === "string"
     )
       return {
@@ -100,13 +106,13 @@ export function connectProject(
       if (
         event.origin !== endpoint.origin ||
         event.source !== popup ||
-        result?.type !== "pinthread:setup" ||
+        (result?.type !== "pinthread:setup" && result?.type !== "komo:setup") ||
         result.code !== options.onboarding?.code
       )
         return;
       if (
         typeof result.project !== "string" ||
-        !/^pinthread_[a-f0-9]{32}$/.test(result.project) ||
+        !projectKey.test(result.project) ||
         typeof result.repo !== "string" ||
         typeof result.token !== "string" ||
         !result.token ||

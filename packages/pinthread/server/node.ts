@@ -66,7 +66,9 @@ const server = createServer(async (incoming, outgoing) => {
         headers.set(name, Array.isArray(value) ? value.join(", ") : value);
     }
     // Ignore client-supplied Cloudflare IP headers. The API uses this trusted value for rate limits.
-    const proxyHops = Number(process.env.PINTHREAD_PROXY_HOPS ?? 0);
+    const proxyHops = Number(
+      process.env.PINTHREAD_PROXY_HOPS ?? process.env.KOMO_PROXY_HOPS ?? 0,
+    );
     if (!Number.isInteger(proxyHops) || proxyHops < 0 || proxyHops > 8)
       throw Error("Invalid PINTHREAD_PROXY_HOPS");
     const forwardedHeader = incoming.headers["x-forwarded-for"];

@@ -29,6 +29,14 @@ export function branchName(env, cwd) {
     gitValue(["symbolic-ref", "--short", "HEAD"], cwd)
   );
 }
+/** Pre-rename installs set KOMO_* variables; PINTHREAD_* wins when both exist. */
+export function withLegacyEnv(env) {
+  const merged = { ...env };
+  for (const [name, value] of Object.entries(env))
+    if (name.startsWith("KOMO_") && value !== undefined)
+      merged[`PINTHREAD_${name.slice(5)}`] ??= value;
+  return merged;
+}
 export function clientModule(config) {
   return `import { definePinthread } from 'pinthread/setup';\n\nexport const initPinthread = definePinthread(${JSON.stringify(config, null, 2)});\n`;
 }

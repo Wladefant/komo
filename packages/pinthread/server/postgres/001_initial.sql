@@ -30,99 +30,99 @@ CREATE INDEX invite_expiry ON project_invites(expires_at);
 CREATE TABLE export_revisions (project text PRIMARY KEY, version bigint NOT NULL DEFAULT 0);
 CREATE TABLE project_sites (project text NOT NULL, origin text NOT NULL, added_at bigint NOT NULL, removed integer NOT NULL DEFAULT 0, PRIMARY KEY(project,origin));
 
-CREATE FUNCTION pinthread_quota(p_project text, p_comments integer, p_bytes bigint) RETURNS void LANGUAGE plpgsql AS $$
+CREATE FUNCTION komo_quota(p_project text, p_comments integer, p_bytes bigint) RETURNS void LANGUAGE plpgsql AS $$
 BEGIN
   UPDATE project_quotas SET comments=GREATEST(0,comments+p_comments), bytes=GREATEST(0,bytes+p_bytes) WHERE project=p_project;
   IF EXISTS(SELECT 1 FROM project_quotas WHERE project=p_project AND (comments>max_comments OR bytes>max_bytes)) THEN
-    RAISE EXCEPTION 'pinthread_quota_exceeded';
+    RAISE EXCEPTION 'komo_quota_exceeded';
   END IF;
 END $$;
-CREATE FUNCTION pinthread_scope(p_project text,p_repo text,p_branch text) RETURNS void LANGUAGE plpgsql AS $$
+CREATE FUNCTION komo_scope(p_project text,p_repo text,p_branch text) RETURNS void LANGUAGE plpgsql AS $$
 BEGIN
   INSERT INTO scope_revisions(project,repo,branch,version) VALUES(p_project,p_repo,p_branch,1)
   ON CONFLICT(project,repo,branch) DO UPDATE SET version=scope_revisions.version+1;
 END $$;
-CREATE FUNCTION pinthread_export(p_project text) RETURNS void LANGUAGE plpgsql AS $$
+CREATE FUNCTION komo_export(p_project text) RETURNS void LANGUAGE plpgsql AS $$
 BEGIN
   IF p_project IS NOT NULL THEN
     INSERT INTO export_revisions(project,version) VALUES(p_project,1)
     ON CONFLICT(project) DO UPDATE SET version=export_revisions.version+1;
   END IF;
 END $$;
-CREATE FUNCTION pinthread_thread_change() RETURNS trigger LANGUAGE plpgsql AS $$
+CREATE FUNCTION komo_thread_change() RETURNS trigger LANGUAGE plpgsql AS $$
 BEGIN
   IF TG_OP='DELETE' THEN
-    PERFORM pinthread_quota(OLD.project,0,-(octet_length(OLD.anchor)+octet_length(OLD.page)+octet_length(OLD.branch)+512));
-    PERFORM pinthread_scope(OLD.project,OLD.repo,OLD.branch);
-    PERFORM pinthread_export(OLD.project);
+    PERFORM komo_quota(OLD.project,0,-(octet_length(OLD.anchor)+octet_length(OLD.page)+octet_length(OLD.branch)+512));
+    PERFORM komo_scope(OLD.project,OLD.repo,OLD.branch);
+    PERFORM komo_export(OLD.project);
     RETURN OLD;
   END IF;
   IF TG_OP='INSERT' THEN
-    PERFORM pinthread_quota(NEW.project,0,octet_length(NEW.anchor)+octet_length(NEW.page)+octet_length(NEW.branch)+512);
+    PERFORM komo_quota(NEW.project,0,octet_length(NEW.anchor)+octet_length(NEW.page)+octet_length(NEW.branch)+512);
   ELSE
-    PERFORM pinthread_quota(NEW.project,0,octet_length(NEW.anchor)-octet_length(OLD.anchor));
+    PERFORM komo_quota(NEW.project,0,octet_length(NEW.anchor)-octet_length(OLD.anchor));
   END IF;
-  PERFORM pinthread_scope(NEW.project,NEW.repo,NEW.branch);
-  PERFORM pinthread_export(NEW.project);
+  PERFORM komo_scope(NEW.project,NEW.repo,NEW.branch);
+  PERFORM komo_export(NEW.project);
   RETURN NEW;
 END $$;
-CREATE FUNCTION pinthread_thread_children() RETURNS trigger LANGUAGE plpgsql AS $$
+CREATE FUNCTION komo_thread_children() RETURNS trigger LANGUAGE plpgsql AS $$
 BEGIN
-  PERFORM set_config('pinthread.deleting_thread',OLD.id,true);
+  PERFORM set_config('komo.deleting_thread',OLD.id,true);
   DELETE FROM comments WHERE thread_id=OLD.id;
-  PERFORM set_config('pinthread.deleting_thread','',true);
+  PERFORM set_config('komo.deleting_thread','',true);
   RETURN OLD;
 END $$;
-CREATE TRIGGER thread_children BEFORE DELETE ON threads FOR EACH ROW EXECUTE FUNCTION pinthread_thread_children();
-CREATE TRIGGER thread_change AFTER INSERT OR UPDATE OR DELETE ON threads FOR EACH ROW EXECUTE FUNCTION pinthread_thread_change();
-CREATE FUNCTION pinthread_comment_change() RETURNS trigger LANGUAGE plpgsql AS $$
+CREATE TRIGGER thread_children BEFORE DELETE ON threads FOR EACH ROW EXECUTE FUNCTION komo_thread_children();
+CREATE TRIGGER thread_change AFTER INSERT OR UPDATE OR DELETE ON threads FOR EACH ROW EXECUTE FUNCTION komo_thread_change();
+CREATE FUNCTION komo_comment_change() RETURNS trigger LANGUAGE plpgsql AS $$
 DECLARE p text;
 BEGIN
   SELECT project INTO p FROM threads WHERE id=COALESCE(NEW.thread_id,OLD.thread_id);
   IF TG_OP='INSERT' THEN
-    PERFORM pinthread_quota(p,1,octet_length(NEW.body)+256);
+    PERFORM komo_quota(p,1,octet_length(NEW.body)+256);
   ELSIF TG_OP='UPDATE' THEN
-    PERFORM pinthread_quota(p,0,octet_length(NEW.body)-octet_length(OLD.body));
+    PERFORM komo_quota(p,0,octet_length(NEW.body)-octet_length(OLD.body));
   ELSE
-    PERFORM pinthread_quota(p,-1,-(octet_length(OLD.body)+256));
-    IF current_setting('pinthread.deleting_thread',true) IS DISTINCT FROM OLD.thread_id THEN
+    PERFORM komo_quota(p,-1,-(octet_length(OLD.body)+256));
+    IF current_setting('komo.deleting_thread',true) IS DISTINCT FROM OLD.thread_id THEN
       UPDATE threads SET updated_at=GREATEST(updated_at+1,(extract(epoch FROM clock_timestamp())*1000)::bigint) WHERE id=OLD.thread_id;
     END IF;
   END IF;
-  PERFORM pinthread_export(p);
+  PERFORM komo_export(p);
   RETURN COALESCE(NEW,OLD);
 END $$;
-CREATE FUNCTION pinthread_comment_children() RETURNS trigger LANGUAGE plpgsql AS $$
+CREATE FUNCTION komo_comment_children() RETURNS trigger LANGUAGE plpgsql AS $$
 BEGIN
   DELETE FROM reactions WHERE comment_id=OLD.id;
   RETURN OLD;
 END $$;
-CREATE TRIGGER comment_children BEFORE DELETE ON comments FOR EACH ROW EXECUTE FUNCTION pinthread_comment_children();
-CREATE TRIGGER comment_change AFTER INSERT OR UPDATE OR DELETE ON comments FOR EACH ROW EXECUTE FUNCTION pinthread_comment_change();
-CREATE FUNCTION pinthread_reaction_change() RETURNS trigger LANGUAGE plpgsql AS $$
+CREATE TRIGGER comment_children BEFORE DELETE ON comments FOR EACH ROW EXECUTE FUNCTION komo_comment_children();
+CREATE TRIGGER comment_change AFTER INSERT OR UPDATE OR DELETE ON comments FOR EACH ROW EXECUTE FUNCTION komo_comment_change();
+CREATE FUNCTION komo_reaction_change() RETURNS trigger LANGUAGE plpgsql AS $$
 DECLARE p text;
 BEGIN
   SELECT t.project INTO p FROM comments c JOIN threads t ON t.id=c.thread_id WHERE c.id=COALESCE(NEW.comment_id,OLD.comment_id);
-  IF TG_OP='INSERT' THEN PERFORM pinthread_quota(p,0,256);
-  ELSIF TG_OP='DELETE' THEN PERFORM pinthread_quota(p,0,-256);
+  IF TG_OP='INSERT' THEN PERFORM komo_quota(p,0,256);
+  ELSIF TG_OP='DELETE' THEN PERFORM komo_quota(p,0,-256);
   END IF;
-  PERFORM pinthread_export(p);
+  PERFORM komo_export(p);
   RETURN COALESCE(NEW,OLD);
 END $$;
-CREATE TRIGGER reaction_change AFTER INSERT OR UPDATE OR DELETE ON reactions FOR EACH ROW EXECUTE FUNCTION pinthread_reaction_change();
-CREATE FUNCTION pinthread_member_change() RETURNS trigger LANGUAGE plpgsql AS $$
+CREATE TRIGGER reaction_change AFTER INSERT OR UPDATE OR DELETE ON reactions FOR EACH ROW EXECUTE FUNCTION komo_reaction_change();
+CREATE FUNCTION komo_member_change() RETURNS trigger LANGUAGE plpgsql AS $$
 BEGIN
-  IF TG_OP='INSERT' THEN PERFORM pinthread_quota(NEW.project,0,13312);
-  ELSE PERFORM pinthread_quota(OLD.project,0,-13312);
+  IF TG_OP='INSERT' THEN PERFORM komo_quota(NEW.project,0,13312);
+  ELSE PERFORM komo_quota(OLD.project,0,-13312);
   END IF;
   RETURN COALESCE(NEW,OLD);
 END $$;
-CREATE TRIGGER member_change AFTER INSERT OR DELETE ON project_members FOR EACH ROW EXECUTE FUNCTION pinthread_member_change();
-CREATE FUNCTION pinthread_profile_change() RETURNS trigger LANGUAGE plpgsql AS $$
+CREATE TRIGGER member_change AFTER INSERT OR DELETE ON project_members FOR EACH ROW EXECUTE FUNCTION komo_member_change();
+CREATE FUNCTION komo_profile_change() RETURNS trigger LANGUAGE plpgsql AS $$
 BEGIN
   UPDATE scope_revisions SET version=version+1 WHERE (project,repo,branch) IN
     (SELECT t.project,t.repo,t.branch FROM threads t JOIN comments c ON c.thread_id=t.id WHERE c.user_id=NEW.id);
   UPDATE export_revisions SET version=version+1 WHERE project IN (SELECT project FROM project_members WHERE user_id=NEW.id);
   RETURN NEW;
 END $$;
-CREATE TRIGGER profile_change AFTER UPDATE ON users FOR EACH ROW EXECUTE FUNCTION pinthread_profile_change();
+CREATE TRIGGER profile_change AFTER UPDATE ON users FOR EACH ROW EXECUTE FUNCTION komo_profile_change();

@@ -68,3 +68,6 @@ export function usePinthread(config: PinthreadConfig): void {
     [],
   );
 }
+
+/** @deprecated Pre-rename name for usePinthread. */
+export const useKomo = usePinthread;

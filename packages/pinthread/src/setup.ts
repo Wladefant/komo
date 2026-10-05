@@ -7,3 +7,6 @@ export function definePinthread(config: PinthreadConfig) {
   return (overrides: Partial<PinthreadConfig> = {}) =>
     initComments(resolveConfig({ ...config, ...overrides }));
 }
+
+/** @deprecated Pre-rename name for definePinthread. */
+export const defineKomo = definePinthread;

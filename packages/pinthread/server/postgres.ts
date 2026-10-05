@@ -10,6 +10,22 @@ types.setTypeParser(20, (value) => {
 import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 
+// Numbered PostgreSQL migrations; version N is the Nth file. Applied files are immutable.
+export const POSTGRES_MIGRATIONS = [
+  "001_initial.sql",
+  "002_pinthread_quota_message.sql",
+] as const;
+
+/** Versions still to apply, given the applied versions. Rejects gaps and unknown versions. */
+export function pendingMigrations(applied: readonly number[]): number[] {
+  const latest = POSTGRES_MIGRATIONS.length;
+  const have = new Set(applied);
+  const top = applied.length ? Math.max(...applied) : 0;
+  if (top > latest || have.size !== applied.length || have.size !== top)
+    throw Error("Unsupported PostgreSQL schema version");
+  return Array.from({ length: latest - top }, (_, index) => top + index + 1);
+}
+
 // Keep the D1-shaped boundary used by the API. A batch always has one transaction.
 export function postgresDatabase(connectionString: string) {
   const pool = new Pool({ connectionString, max: 10 });
@@ -65,23 +81,25 @@ export function postgresDatabase(connectionString: string) {
       try {
         await client.query("BEGIN");
         await client.query("SELECT pg_advisory_xact_lock(7217495)");
+        // Databases created before the Pinthread rename track versions in komo_schema.
+        const tables = await client.query<{ legacy: string | null; current: string | null }>(
+          "SELECT to_regclass('komo_schema') AS legacy, to_regclass('pinthread_schema') AS current",
+        );
+        if (tables.rows[0].legacy && !tables.rows[0].current)
+          await client.query("ALTER TABLE komo_schema RENAME TO pinthread_schema");
         await client.query(
           "CREATE TABLE IF NOT EXISTS pinthread_schema (version integer PRIMARY KEY)",
         );
         const versions = await client.query<{ version: number }>(
           "SELECT version FROM pinthread_schema",
         );
-        if (!versions.rows.length) {
+        const pending = pendingMigrations(versions.rows.map((row) => row.version));
+        for (const version of pending) {
           const path = fileURLToPath(
-            new URL("./postgres/001_initial.sql", import.meta.url),
+            new URL(`./postgres/${POSTGRES_MIGRATIONS[version - 1]}`, import.meta.url),
           );
           await client.query(await readFile(path, "utf8"));
-          await client.query("INSERT INTO pinthread_schema(version) VALUES(1)");
-        } else if (
-          versions.rows.length !== 1 ||
-          versions.rows[0].version !== 1
-        ) {
-          throw Error("Unsupported PostgreSQL schema version");
+          await client.query("INSERT INTO pinthread_schema(version) VALUES($1)", [version]);
         }
         await client.query("COMMIT");
       } catch (error) {

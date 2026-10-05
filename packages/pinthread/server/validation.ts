@@ -218,3 +218,19 @@ export function cliReturnOrigin(value: unknown, fallback: string): string {
   );
   return url.origin;
 }
+
+/**
+ * Quota triggers raise this text. Databases created before the Pinthread rename
+ * still raise the komo_ spelling until migration 0016 / 002 runs, so match both.
+ */
+export function isQuotaError(error: unknown): boolean {
+  return (
+    error instanceof Error &&
+    /\b(pinthread|komo)_quota_exceeded\b/.test(error.message)
+  );
+}
+
+/** The hosted dashboard's own project key is `_pinthread`; `_komo` is the pre-rename spelling. */
+export function canonicalProject<T extends string | null>(project: T): T {
+  return (project === "_komo" ? "_pinthread" : project) as T;
+}

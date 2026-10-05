@@ -13,7 +13,7 @@ import { homedir } from "node:os";
 import { createHash, randomBytes } from "node:crypto";
 import { createServer } from "node:http";
 import { spawn } from "node:child_process";
-import { branchName } from "./config.mjs";
+import { branchName, withLegacyEnv } from "./config.mjs";
 import { agentWorkflow, agentPrompt } from "../dist/agent-prompt.js";
 
 import { installAgentWorkflow } from "./workflow.mjs";
@@ -135,6 +135,14 @@ async function configuration(flags, cwd, env) {
     try {
       settings = JSON.parse(
         await readFile(join(directory, ".pinthread/project.json"), "utf8")
+      );
+      break;
+    } catch (error) {
+      if (error.code !== "ENOENT") throw error;
+    }
+    try {
+      settings = JSON.parse(
+        await readFile(join(directory, ".komo/project.json"), "utf8")
       );
       break;
     } catch (error) {
@@ -397,8 +405,9 @@ async function login(config, path, flags) {
 
 export async function runAgent(
   args,
-  { cwd = process.cwd(), env = process.env } = {}
+  { cwd = process.cwd(), env: rawEnv = process.env } = {}
 ) {
+  const env = withLegacyEnv(rawEnv);
   const { flags, positional } = parse(args);
   const [command, action = "list", threadId, commentId] = positional;
   if (command === "agents") {

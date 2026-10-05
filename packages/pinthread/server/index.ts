@@ -20,9 +20,11 @@ import { timingSafeEqual } from "node:crypto";
 import type { Identity, Thread, Comment } from "../src/types.js";
 import {
   anchorValue,
+  canonicalProject,
   cliReturnOrigin,
   check,
   HttpError,
+  isQuotaError,
   localOrigin,
   originAllowed,
   previewPattern,
@@ -641,7 +643,9 @@ async function route(
     return oauthPath[2] === "authorize"
       ? oauthAuthorize(request, env, oauthPath[1] as "github" | "google")
       : oauthCallback(request, env, oauthPath[1] as "github" | "google");
-  const project = string(url.searchParams.get("project"), 100, "project");
+  const project = canonicalProject(
+    string(url.searchParams.get("project"), 100, "project"),
+  );
   const config: Project | undefined =
     project === "_pinthread" && env.PINTHREAD_HOSTED === "true"
       ? { repo: "_pinthread", origins: [url.origin], allowGuests: false }
@@ -1352,8 +1356,7 @@ export default {
           error.status
         );
       else if (
-        error instanceof Error &&
-        error.message.includes("pinthread_quota_exceeded")
+        isQuotaError(error)
       )
         response = json(
           {
@@ -1372,7 +1375,9 @@ export default {
         );
       }
     }
-    const project = new URL(request.url).searchParams.get("project");
+    const project = canonicalProject(
+      new URL(request.url).searchParams.get("project"),
+    );
     let config: { origins: string[] } | undefined;
     try {
       config = project

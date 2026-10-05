@@ -7,7 +7,7 @@ Comments for your website. Point at an element, mark an area, and leave feedback
 
 Framework independent. Shared persistence. Google identities and guest reviewers.
 
-[Website](https://pinthread.dev) · [Documentation](https://pinthread.dev/install/) · [Playground](https://pinthread.dev/playground/)
+[Website](https://pinthread.dev) · [Documentation](https://pinthread.dev/install/) · [Playground](https://pinthread.dev/playground/) (`pinthread.dev` is a placeholder until the domain is registered)
 
 Review actions update immediately while saving in the background. Failed writes roll back with a notice; unsaved comment text is retained.
 
@@ -18,7 +18,7 @@ npm install pinthread
 npx pinthread init
 ```
 
-Requires Node.js 22 or newer. The unscoped `pinthread` package on npm is unrelated; use `pinthread`.
+Requires Node.js 22 or newer.
 
 The setup command detects your Git repository, creates a project, and asks you to sign in with Google. It prints a public project key and a ready-to-paste inline configuration. It also saves settings to `.pinthread/project.json` and generates an optional `pinthread.config.js` helper.
 
@@ -291,7 +291,7 @@ The npm package, CLI and API live in `packages/pinthread`; the website lives in 
 
 ## Source
 
-Extracted from the pinthread product at source commit `f57f3521` in the Cloudflare marketing workspace. Product development now lives in [tjcages/pinthread](https://github.com/Wladefant/pinthread). Third-party credits are preserved in each package’s NOTICE.md.
+Extracted from the pinthread product at source commit `f57f3521` in the Cloudflare marketing workspace. Product development now lives in [Wladefant/komo](https://github.com/Wladefant/komo). Third-party credits are preserved in each package’s NOTICE.md.
 
 
 ## Project management

@@ -30,7 +30,7 @@ Newest first. One `When X, do Y` line per operator correction, at most 20. The s
 ## Linear tracking
 
 - Linear is the source of truth for project work. Follow `linear-discipline` and `linear-setup`; authenticate with official Linear MCP before reads or writes.
-- Search for `pinthread`, `Pinthread`, and `https://github.com/Wladefant/pinthread` before creating a project or issue. Preserve existing work and obtain the skill's required approvals before extending an existing project.
+- Search for `pinthread`, `Pinthread`, and `https://github.com/Wladefant/komo` before creating a project or issue. Preserve existing work and obtain the skill's required approvals before extending an existing project.
 - Official MCP authentication and search completed on 2026-09-17 after restart. Team: **Off-brand** (`OFF`), ID `7c1223a3-ebb1-42a3-9ba7-5f0a4a776933`.
 - Project: [pinthread](https://linear.app/off-brand-studio/project/komo-9f81aa4f25a3), ID `c75f51ee-3d39-43ad-b561-0034122e8d09`.
 - Milestones: Release readiness (`e4bb27cb-3cc8-4d77-aae3-b07e22e0e7f6`), Launch assets (`8966e200-be31-4a49-9f02-63984259aebc`), Beta rollout (`f4765f25-5c00-4b5b-b901-522f404ffd29`).

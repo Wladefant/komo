@@ -319,7 +319,7 @@ The npm package, CLI and API live in `packages/pinthread`; the website lives in 
 
 ## Source
 
-Extracted from the pinthread product at source commit `f57f3521` in the Cloudflare marketing workspace. Product development now lives in [tjcages/pinthread](https://github.com/Wladefant/pinthread). Third-party credits are preserved in each package’s NOTICE.md.
+Extracted from the pinthread product at source commit `f57f3521` in the Cloudflare marketing workspace. Product development now lives in [Wladefant/komo](https://github.com/Wladefant/komo). Third-party credits are preserved in each package’s NOTICE.md.
 
 
 ## Project management
