@@ -1,0 +1,26 @@
+<!doctype html>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" /><title>
+  pinthread performance fixture</title
+><style>
+  body {
+    font: 14px system-ui;
+    margin: 20px;
+  }
+  .target {
+    height: 32px;
+    contain: layout;
+  }
+  #stats {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    background: white;
+    padding: 16px;
+    z-index: 1;
+    max-width: 350px;
+  }
+</style>
+<pre id="stats">Warming up…</pre>
+<main id="content"></main>
+<script type="module" src="bench.js"></script>

@@ -1,5 +1,5 @@
 {
-  "name": "komo",
+  "name": "pinthread-workspace",
   "private": true,
   "type": "module",
   "packageManager": "pnpm@10.33.3",
@@ -7,17 +7,17 @@
     "node": ">=22.12"
   },
   "scripts": {
-    "build": "pnpm --filter komo-site build",
-    "test": "pnpm --filter @tjcages/komo test",
+    "build": "pnpm --filter pinthread-site build",
+    "test": "pnpm --filter pinthread test",
     "typecheck": "pnpm -r typecheck",
-    "size": "pnpm --filter @tjcages/komo size",
+    "size": "pnpm --filter pinthread size",
     "check:licenses": "node --test scripts/check-licenses.test.mjs && node scripts/check-licenses.mjs",
-    "dev": "pnpm --filter komo-site dev",
-    "dev:api": "pnpm --filter @tjcages/komo dev:api",
-    "deploy:site": "pnpm --filter komo-site run deploy",
-    "deploy:api": "pnpm --filter @tjcages/komo build:setup && wrangler deploy --config packages/komo/server/hosted.jsonc",
+    "dev": "pnpm --filter pinthread-site dev",
+    "dev:api": "pnpm --filter pinthread dev:api",
+    "deploy:site": "pnpm --filter pinthread-site run deploy",
+    "deploy:api": "pnpm --filter pinthread build:setup && wrangler deploy --config packages/pinthread/server/hosted.jsonc",
     "preview:deploy": "pnpm preview:site",
-    "preview:site": "pnpm build && wrangler versions upload --config packages/komo-site/wrangler.jsonc --preview-alias \"$(git rev-parse --abbrev-ref HEAD | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9]+/-/g; s/^-+|-+$//g')\""
+    "preview:site": "pnpm build && wrangler versions upload --config packages/pinthread-site/wrangler.jsonc --preview-alias \"$(git rev-parse --abbrev-ref HEAD | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9]+/-/g; s/^-+|-+$//g')\""
   },
   "devDependencies": {
     "wrangler": "4.136.3",

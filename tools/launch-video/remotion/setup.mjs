@@ -10,7 +10,7 @@ import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 const source = dirname(fileURLToPath(import.meta.url));
 const repo = resolve(source, "../../..");
-const target = resolve(repo, "../komo-promo");
+const target = resolve(repo, "../pinthread-promo");
 const assets = [".claude/skills", ".agents/skills"]
   .map((dir) => resolve(repo, dir, "product-video/assets"))
   .find(existsSync);

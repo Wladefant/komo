@@ -1,7 +1,7 @@
-import "../../packages/komo-site/src/site";
+import "../../packages/pinthread-site/src/site";
 // Review-only harness. Not imported by the package or production website.
-import { initKomo } from "../../packages/komo/src/index";
-const project = "komo_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+import { initPinthread } from "../../packages/pinthread/src/index";
+const project = "pinthread_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
 const user = { id: "google:sample", name: "Sample reviewer", verified: true };
 let threads: unknown[] = [];
 const originalFetch = window.fetch.bind(window);
@@ -21,4 +21,4 @@ window.fetch = async (input, init) => {
   return originalFetch(input, init);
 };
 const mode = new URLSearchParams(location.search).get("mode");
-initKomo({ endpoint: location.origin, project: mode ? project : "setup_review", repo: "sample/website", pageRoot: document.querySelector<HTMLElement>("#site-content")!, ...(mode ? {} : { onboarding: { inProject: true, code: crypto.randomUUID(), sites: ["https://preview.example.com"] } }) });
+initPinthread({ endpoint: location.origin, project: mode ? project : "setup_review", repo: "sample/website", pageRoot: document.querySelector<HTMLElement>("#site-content")!, ...(mode ? {} : { onboarding: { inProject: true, code: crypto.randomUUID(), sites: ["https://preview.example.com"] } }) });

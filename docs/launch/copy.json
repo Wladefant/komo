@@ -1,19 +1,19 @@
 {
   "standalone": [
-    {"audience":"general", "text":"I made komo for the \"which button?\" part of website feedback.\n\nPoint at an element, leave a comment, discuss it there, and copy the context into your coding agent.\n\nThe public beta is ready to try: https://komo.offbr.co"},
-    {"audience":"developer", "text":"Shipping a preview? Put the feedback on the page.\n\nkomo gives you anchored comments, replies, reactions, and a CLI your coding agent can use to read and resolve feedback. React hook included.\n\nPublic beta: https://komo.offbr.co"},
-    {"audience":"designer", "text":"\"A little more space here.\"\n\nWith komo, \"here\" is an actual place on your website. Point at an element or mark an area, leave feedback, and keep the conversation attached.\n\nTry the public beta: https://komo.offbr.co"}
+    {"audience":"general", "text":"I made pinthread for the \"which button?\" part of website feedback.\n\nPoint at an element, leave a comment, discuss it there, and copy the context into your coding agent.\n\nThe public beta is ready to try: https://pinthread.dev"},
+    {"audience":"developer", "text":"Shipping a preview? Put the feedback on the page.\n\npinthread gives you anchored comments, replies, reactions, and a CLI your coding agent can use to read and resolve feedback. React hook included.\n\nPublic beta: https://pinthread.dev"},
+    {"audience":"designer", "text":"\"A little more space here.\"\n\nWith pinthread, \"here\" is an actual place on your website. Point at an element or mark an area, leave feedback, and keep the conversation attached.\n\nTry the public beta: https://pinthread.dev"}
   ],
   "thread": [
-    "komo is in public beta.\n\nIt puts comments on your website so feedback stays attached to the thing you’re talking about.\n\nHere’s the loop: https://komo.offbr.co",
+    "pinthread is in public beta.\n\nIt puts comments on your website so feedback stays attached to the thing you’re talking about.\n\nHere’s the loop: https://pinthread.dev",
     "Point at an element or mark an area. Leave a comment. Reply, react, and resolve it when the work is checked.\n\nReviewers can use Google or leave a guest name. You can keep projects private with invited Google accounts.",
-    "When it’s time to make the change, copy open feedback into your coding agent. The prompt includes page and element context.\n\nThere’s a CLI too. The agent edits your code; komo carries the feedback and the conversation.",
-    "Install @tjcages/komo, then run its init command for a project key. Use initKomo, or useKomo in React.\n\nUse the hosted starter or self-host on Cloudflare. Docs and a live demo: https://komo.offbr.co/install/"
+    "When it’s time to make the change, copy open feedback into your coding agent. The prompt includes page and element context.\n\nThere’s a CLI too. The agent edits your code; pinthread carries the feedback and the conversation.",
+    "Install pinthread, then run its init command for a project key. Use initPinthread, or usePinthread in React.\n\nUse the hosted starter or self-host on Cloudflare. Docs and a live demo: https://pinthread.dev/install/"
   ],
   "replies": [
-    {"topic":"React", "text":"React 18.2 and 19 are supported. Import useKomo from @tjcages/komo/react and call it once near your app root with the project key from setup. The hook handles mounting and cleanup. https://komo.offbr.co/install/"},
-    {"topic":"agent handoff", "text":"Copying feedback doesn’t run an agent. Paste the prompt into the agent you use, or give it the komo CLI workflow. It reads the feedback, edits your code, verifies the result, then replies and resolves. https://komo.offbr.co/agent-prompts/"},
-    {"topic":"hosting", "text":"The hosted starter allows 3 projects per owner and 250 stored comments per project, including replies. You can also self-host on Cloudflare; its limits and costs apply. https://komo.offbr.co/hosting/"},
-    {"topic":"scope", "text":"Feedback is shared across deployments of a project by default. Branch isolation is optional. Your public project key identifies the project; approved sites and project access settings control who can use it. https://komo.offbr.co/configuration/"}
+    {"topic":"React", "text":"React 18.2 and 19 are supported. Import usePinthread from pinthread/react and call it once near your app root with the project key from setup. The hook handles mounting and cleanup. https://pinthread.dev/install/"},
+    {"topic":"agent handoff", "text":"Copying feedback doesn’t run an agent. Paste the prompt into the agent you use, or give it the pinthread CLI workflow. It reads the feedback, edits your code, verifies the result, then replies and resolves. https://pinthread.dev/agent-prompts/"},
+    {"topic":"hosting", "text":"The hosted starter allows 3 projects per owner and 250 stored comments per project, including replies. You can also self-host on Cloudflare; its limits and costs apply. https://pinthread.dev/hosting/"},
+    {"topic":"scope", "text":"Feedback is shared across deployments of a project by default. Branch isolation is optional. Your public project key identifies the project; approved sites and project access settings control who can use it. https://pinthread.dev/configuration/"}
   ]
 }

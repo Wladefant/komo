@@ -1,7 +1,7 @@
 # Current story and render decisions
 
 Opening: **Figma comments for any site**
-Claim: komo makes website feedback pointable, conversational, and portable.
+Claim: pinthread makes website feedback pointable, conversational, and portable.
 Proof: a pin becomes a thread, the sidebar collects feedback, and the drawer copies its context for an agent.
 Context: the short title and actual comment pins.
 Tension: feedback needs a conversation and a specific target.

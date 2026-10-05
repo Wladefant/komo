@@ -32,4 +32,4 @@ Verify the changes, reply with the result, and resolve the feedback.
 
 9
 00:00:35,000 --> 00:00:42,000
-Install komo. Get your project key with komo init. komo.offbr.co
+Install pinthread. Get your project key with pinthread init. pinthread.dev

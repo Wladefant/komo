@@ -1,6 +1,6 @@
 # Current render evidence — 2026-09-22
 
-[Worker preview](https://427324ea-komo-site.off-brand.workers.dev/promo/) · [PR #28](https://github.com/tjcages/komo/pull/28) · [OFF-680](https://linear.app/off-brand-studio/issue/OFF-680)
+[Worker preview](https://427324ea-pinthread-site.off-brand.workers.dev/promo/) · [PR #28](https://github.com/Wladefant/pinthread/pull/28) · [OFF-680](https://linear.app/off-brand-studio/issue/OFF-680)
 
 - Exact opening: “Figma comments for any site”. One 96px line, 77-frame validated reading hold, clear side margins through the final camera zoom. The other seven scenes retain their choreography.
 - Render source `0237614`. H.264, 1920×1080, 30fps, 626 frames, exactly 20.866667 seconds, silent. The review label rounds to 20.9s.

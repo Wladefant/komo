@@ -15,4 +15,4 @@ The preceding pull-down design stuttered while following a finger on the owner's
 - The account card's enclosing layer measured x=20, y=86.4, right=370, bottom=830 against the sidebar's x=12, y=78.4, right=378, bottom=838: an 8px inset on every edge. Its computed background was transparent, the layer did not receive pointer events, and the card did.
 - Device Hub computer-use attachment last failed with `Computer Use server error -10005: timeoutReached`. Native iOS feel and keyboard placement for this replacement await owner testing on the Worker preview.
 
-The owner approved the fixed sidebar, final spacing, and X icon on iPhone. Smooth comment navigation and the inset account card await owner review on this Worker preview: https://6dc9b9ab-komo-site.off-brand.workers.dev/
+The owner approved the fixed sidebar, final spacing, and X icon on iPhone. Smooth comment navigation and the inset account card await owner review on this Worker preview: https://6dc9b9ab-pinthread-site.off-brand.workers.dev/
