@@ -5,10 +5,10 @@ Policy: `workflows/e2e/POLICY.md`. Issue: https://github.com/Wladefant/super-boa
 
 ## Test files
 
-- `tests/widget-flow.e2e.ts`: widget flow tests (open, place pin, drag toolbar, reply, resolve) at 390x844 and 1440x900
-- `tests/drag-regression.e2e.ts`: regression test for mobile toolbar drag docking and first-touch event retention (PR 45 context: pre-fix `6fb75d7b8fc045b4c5114e042e64a5626785843d`, fixed `90df2160bc55be7bf127c3482f381d148863276c`)
-- `tests/request-guard.e2e.ts`: network request abort verification for unlisted/production hosts
-- `config.test.py`: standalone check verifying host and request refusal logic
+- `tests/widget-flow.e2e.ts`: comment mode toggles and the dock stays reachable (inside the viewport, controls of at least 44 px, no horizontal overflow) at 390x844, 390x420 (keyboard open) and 1440x900. Placing a pin, replying and resolving are not covered: they need the pinthread API, which the request guard blocks (https://github.com/Wladefant/super-board/issues/490).
+- `tests/drag-regression.e2e.ts`: PR 45 regressions, pre-fix `6fb75d7b8fc045b4c5114e042e64a5626785843d`, fixed `90df2160bc55be7bf127c3482f381d148863276c`: a dragged dock keeps its placement after a mode change, and the first touch keeps the pressed control connected until release
+- `tests/request-guard.e2e.ts`: the page fetches a production host and an unlisted host, both must be aborted, and its own host must pass
+- `config.test.py`: standalone check verifying host and request refusal logic. It needs a super-board checkout: set `SUPERBOARD_ROOT` (default `../super-board`, relative to this repository). A missing guard fails the test.
 
 ## Environment variables
 

@@ -1,24 +1,16 @@
 /**
- * Drag regression tests for Komo / Pinthread toolbar docking and first-touch drag.
+ * Drag regression tests for the pinthread dock, from upstream https://github.com/tjcages/komo/pull/45.
+ * Pre-fix upstream commit:  6fb75d7b8fc045b4c5114e042e64a5626785843d
+ * Fixed upstream commit:    90df2160bc55be7bf127c3482f381d148863276c
  *
- * Context: https://github.com/tjcages/komo/pull/45
- * Pre-fix commit SHA: 6fb75d7b8fc045b4c5114e042e64a5626785843d
- * Fixed commit SHA:   90df2160bc55be7bf127c3482f381d148863276c
+ * Both tests read real widget state through the open shadow root of [data-branch-comments] and drive the dock with
+ * touch pointer events, so they need no model call.
  *
- * Bug Condition 1 (commit 4b2f5812ecad95259698a181944b77213e6baae8):
- * On compact/phone layouts (390x844), dragging the toolbar docked it to an edge,
- * but renderToolbar() unconditionally reset toolbar.style.left = "50%" on every
- * render and resize. On the pre-fix commit 6fb75d7, the toolbar snapped back to
- * the bottom center ("50%") after any re-render or resize. On the fixed commit 90df216,
- * the dragged toolbar keeps its requested dock placement.
- *
- * Bug Condition 2 (commit 90df2160bc55be7bf127c3482f381d148863276c):
- * On touch devices, pointerenter fires immediately before pointerdown.
- * In 6fb75d7, pointerenter called load() which resolved in a microtask and mounted
- * the runtime before pointerdown, detaching the node under the finger. The first
- * touch drag after page load was dispatched to a detached node and failed to move
- * the toolbar. In 90df216, touch pointerenter marks the shell as pressed and defers
- * replacement until contact ends, allowing the first touch drag to succeed.
+ * 1. A dragged dock keeps its place when the mode changes. Pre-fix, compact (mobile) layouts rebuilt the dock at
+ *    left:50% on every render, so it snapped back to the bottom centre. The edge layout at 1440 never had that
+ *    bug, so this test passes there on both commits and fails on 390x844 and 390x420 only before the fix.
+ * 2. The first touch must not replace the control under the finger. Pre-fix, pointerenter(touch) mounted the menu
+ *    in a microtask and detached the node before pointerdown. This fails on every viewport before the fix.
  */
 import { test } from '@e2e-dev/web';
 import { expect } from 'e2e';
@@ -26,42 +18,73 @@ import { installRequestGuard } from '../e2e.request-guard.ts';
 
 installRequestGuard();
 
-test('drag regression: mobile compact toolbar retains dragged dock placement across re-render (PR 45)', async ({ app, screen }) => {
+test('drag regression: a dragged dock keeps its placement after a mode change (PR 45)', async ({ app, browser }) => {
   await app.open('/');
-
-  // Locate the toolbar / dock handle
-  const toolbar = screen.getByRole('toolbar', { name: /navigation|dock/i });
-  await expect(toolbar).toBeVisible({ timeout: 15000 });
-
-  // On compact mobile viewport (390x844), initial placement is bottom center (left: 50%)
-  const heading = screen.getByRole('heading', { level: 1 });
-  await expect(heading).toBeVisible();
-
-  // Perform a drag gesture to dock the toolbar toward the left/top edge
-  await toolbar.dragTo(heading);
-
-  // Assert named condition:
-  // On pre-fix commit 6fb75d7b8fc045b4c5114e042e64a5626785843d, renderToolbar resets style.left to "50%".
-  // On fixed commit 90df2160bc55be7bf127c3482f381d148863276c, toolbarPlacement is preserved in compact mode.
-  // Named assertion: toolbar-dock-retained-after-drag
-  await expect(toolbar).toHaveAttribute('data-dock-retained', 'true');
+  await browser.evaluate(() => localStorage.clear());
+  await app.open('/');
+  const result = await browser.evaluate(async () => {
+    const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
+    const host = document.querySelector('[data-branch-comments]')!;
+    const root = host.shadowRoot!;
+    const toolbar = root.querySelector('.toolbar') as HTMLElement;
+    const rect = () => {
+      const r = toolbar.getBoundingClientRect();
+      return [Math.round(r.x), Math.round(r.y)];
+    };
+    const surface = toolbar.querySelector('.dock__surface') as HTMLElement;
+    const s = surface.getBoundingClientRect();
+    const sx = s.x + 4;
+    const sy = s.y + s.height / 2;
+    const init = rect();
+    const ev = (x: number, y: number) => ({
+      bubbles: true, composed: true, cancelable: true, clientX: x, clientY: y,
+      pointerId: 7, pointerType: 'touch', isPrimary: true, button: 0, buttons: 1,
+    });
+    surface.dispatchEvent(new PointerEvent('pointerdown', ev(sx, sy)));
+    for (let i = 1; i <= 12; i++) {
+      window.dispatchEvent(new PointerEvent('pointermove', ev(sx - i * Math.min(7, sx / 12), sy - i * 30)));
+      await sleep(16);
+    }
+    window.dispatchEvent(new PointerEvent('pointerup', ev(sx - 80, sy - 360)));
+    await sleep(700);
+    const docked = rect();
+    const press = (id: string) => (root.querySelector('[data-dock-item="' + id + '"]') as HTMLElement).click();
+    press('comment');
+    await sleep(500);
+    press('browse');
+    await sleep(500);
+    return { init, docked, after: rect() };
+  });
+  // The drag moved the dock, and a re-render did not move it back.
+  expect(Math.abs(result.docked[1]! - result.init[1]!)).toBeGreaterThan(40);
+  expect(Math.abs(result.after[0]! - result.docked[0]!)).toBeLessThanOrEqual(2);
+  expect(Math.abs(result.after[1]! - result.docked[1]!)).toBeLessThanOrEqual(2);
 });
 
-test('drag regression: first touch drag on lazy toolbar moves toolbar without event loss (PR 45)', async ({ app, screen }) => {
+test('drag regression: the first touch keeps the pressed control connected until release (PR 45)', async ({ app, browser }) => {
   await app.open('/');
-
-  // On page load, the lazy toolbar shell is rendered before runtime mount
-  const toolbarShortcut = screen.getByRole('button', { name: /Add comment|Comments/i });
-  await expect(toolbarShortcut).toBeVisible({ timeout: 15000 });
-
-  // Simulate initial touch contact gesture (pointerenter immediately followed by touch drag)
-  const targetArea = screen.getByRole('heading', { level: 1 });
-  await toolbarShortcut.dragTo(targetArea);
-
-  // Named assertion: first-touch-drag-retains-connected-node
-  // On pre-fix commit 6fb75d7b8fc045b4c5114e042e64a5626785843d, microtask runtime swap
-  // detaches the element during pointerenter, causing the initial gesture to be dropped.
-  // On fixed commit 90df2160bc55be7bf127c3482f381d148863276c, the touched node stays connected
-  // until gesture completion and the toolbar repositions on the very first drag.
-  await expect(toolbarShortcut).toBeVisible();
+  const result = await browser.evaluate(async () => {
+    const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
+    const root = document.querySelector('[data-branch-comments]')!.shadowRoot!;
+    const toolbar = root.querySelector('.toolbar') as HTMLElement;
+    const control = toolbar.querySelector('[data-dock-item="browse"]') as HTMLElement;
+    const touch = { pointerId: 9, pointerType: 'touch', isPrimary: true };
+    toolbar.dispatchEvent(new PointerEvent('pointerenter', touch));
+    await sleep(400);
+    const connectedBeforePress = control.isConnected;
+    control.dispatchEvent(new PointerEvent('pointerdown', { ...touch, bubbles: true, composed: true, button: 0, buttons: 1 }));
+    await sleep(200);
+    const connectedWhilePressed = control.isConnected;
+    document.dispatchEvent(new PointerEvent('pointerup', { ...touch, bubbles: true, composed: true }));
+    await sleep(600);
+    const replacement = toolbar.querySelector('[data-dock-item="browse"]');
+    return {
+      connectedBeforePress,
+      connectedWhilePressed,
+      menuReplacedAfterRelease: !control.isConnected && !!replacement && replacement.isConnected,
+    };
+  });
+  expect(result.connectedBeforePress).toBe(true);
+  expect(result.connectedWhilePressed).toBe(true);
+  expect(result.menuReplacedAfterRelease).toBe(true);
 });

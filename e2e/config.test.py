@@ -5,7 +5,7 @@ Policy: workflows/e2e/POLICY.md rule 6. Issue: https://github.com/Wladefant/supe
 """
 from __future__ import annotations
 
-import json
+import os
 import re
 import sys
 from pathlib import Path
@@ -13,14 +13,16 @@ from urllib.parse import urlparse
 
 HERE = Path(__file__).resolve().parent
 
-# 1. Verify e2e.config.ts and package.json pass the Superboard e2e guard
-guard_script = Path("C:/Users/wkiri/lanes/e2e-slices3/workflows/e2e/e2e_guard.py")
-if guard_script.is_file():
-    sys.path.insert(0, str(guard_script.parent))
-    import e2e_guard
-    findings = e2e_guard.check_config(HERE / "e2e.config.ts", HERE / "package.json")
-    assert not findings, f"e2e_guard findings: {findings}"
-    print("PASS: e2e_guard config check passes with zero findings")
+# 1. Verify e2e.config.ts and package.json pass the Superboard e2e guard. The guard lives in a super-board checkout:
+# SUPERBOARD_ROOT, default a sibling directory of this repository. A missing guard is a failure, never a skip.
+superboard_root = Path(os.environ.get("SUPERBOARD_ROOT", str(HERE.parent.parent / "super-board")))
+guard_script = superboard_root / "workflows" / "e2e" / "e2e_guard.py"
+assert guard_script.is_file(), f"e2e_guard.py not found at {guard_script}; set SUPERBOARD_ROOT to a super-board checkout"
+sys.path.insert(0, str(guard_script.parent))
+import e2e_guard
+findings = e2e_guard.check_config(HERE / "e2e.config.ts", HERE / "package.json")
+assert not findings, f"e2e_guard findings: {findings}"
+print("PASS: e2e_guard config check passes with zero findings")
 
 # 2. Extract and parse host allow-list and deny-lists from e2e.config.ts
 config_text = (HERE / "e2e.config.ts").read_text(encoding="utf-8")

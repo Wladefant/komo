@@ -77,15 +77,17 @@ const go = createOpenAICompatible({
 const model = go.chatModel(process.env.E2E_MODEL ?? 'qwen3.8-flash');
 const providerOptions = { opencodeGo: { enable_thinking: false } };
 
-const distDir = fs.existsSync(path.resolve('..', 'packages', 'pinthread-site', 'dist'))
+// E2E_DIST_DIR points the run at another build of the site (the drag regression runs a pre-fix and a post-fix build).
+const distDir = process.env.E2E_DIST_DIR ?? (fs.existsSync(path.resolve('..', 'packages', 'pinthread-site', 'dist'))
   ? '../packages/pinthread-site/dist'
-  : '../packages/komo-site/dist';
+  : '../packages/komo-site/dist');
 
+const appPort = new URL(appUrl).port || '4340';
 const app = {
-  url: process.env.APP_URL ?? 'http://127.0.0.1:4340',
+  url: appUrl,
   command: {
     executable: 'python',
-    args: ['-m', 'http.server', '4340', '-d', distDir],
+    args: ['-m', 'http.server', appPort, '--bind', '127.0.0.1', '-d', distDir],
     reuseExisting: true,
   },
 };
