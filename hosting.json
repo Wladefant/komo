@@ -1,0 +1,42 @@
+{
+  "schema": 1,
+  "project": "komo",
+  "stage": "live",
+  "dns": {
+    "provider": "cloudflare",
+    "zones": [
+      "wladefant.de"
+    ]
+  },
+  "components": [
+    {
+      "name": "komo-design",
+      "kind": "web",
+      "host": "dokploy-app",
+      "url": "https://komo.wladefant.de",
+      "dokploy_app_id": "UFR6D7LBxJJvgCgIpKqWz",
+      "monthly_cost_usd": null
+    },
+    {
+      "name": "pinthread-api",
+      "kind": "api",
+      "host": "dokploy-app",
+      "url": "https://pinthread.wladefant.de",
+      "dokploy_app_id": "6z4_4dK-Ny2xt7SW9qgHZ",
+      "monthly_cost_usd": null
+    },
+    {
+      "name": "pinthread-db",
+      "kind": "db",
+      "host": "dokploy-db",
+      "url": null,
+      "dokploy_app_id": "b22QagXppcp5OqTjD5g2V",
+      "monthly_cost_usd": null
+    }
+  ],
+  "supabase": {
+    "in_use": false
+  },
+  "next_migration_step": "Configure Cloudflare edge caching in front of Dokploy endpoints.",
+  "exempt": null
+}
