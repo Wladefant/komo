@@ -1,8 +1,8 @@
 # pinthread public beta review
 
-Current review: the 20.9-second Remotion promo. Linear is connected and organized; Google branding review remains pending. No merge or social post is approved by this document.
+Current review: the 20.9-second promo (historical; its Remotion source tool was removed, see https://github.com/Wladefant/super-board/issues/518). Linear is connected and organized; Google branding review remains pending. No merge or social post is approved by this document.
 
-- **[Remotion promo](https://427324ea-pinthread-site.off-brand.workers.dev/promo/)** · [MP4](https://427324ea-pinthread-site.off-brand.workers.dev/promo/pinthread-promo.mp4) · [Source](../../tools/launch-video/remotion/README.md)
+- **[Remotion promo](https://427324ea-pinthread-site.off-brand.workers.dev/promo/)** · [MP4](https://427324ea-pinthread-site.off-brand.workers.dev/promo/pinthread-promo.mp4)
 - [Previous rendered asset gallery](https://4adc4b37.pinthread-wb5.pages.dev/launch-assets/)
 - [Draft PR #28](https://github.com/Wladefant/pinthread/pull/28)
 
@@ -17,13 +17,10 @@ Current review: the 20.9-second Remotion promo. Linear is connected and organize
 | Captions | [SRT](./captions.srt) |
 | Transcript | [Transcript](./transcript.md) |
 | Announcement drafts | [Three options, thread, replies, counts](./copy.md) |
-| Render source and commands | [Remotion README](../../tools/launch-video/remotion/README.md) |
 | Verification | [Asset QA](./qa.md), [media hashes](./render-evidence.json), [release readiness](./readiness.md) |
 
-Rendered media lives in the sibling `../pinthread-promo/out/`, outside Git. No customer comments were used. Recording dependencies live outside the npm/browser runtime.
+Rendered media lives in the sibling `../pinthread-promo/out/`, outside Git. No customer comments were used.
 
 ## Tracking
 
 [Linear project](https://linear.app/off-brand-studio/project/komo-9f81aa4f25a3) · [Creative review OFF-672](https://linear.app/off-brand-studio/issue/OFF-672) · [Readiness and issue index](./readiness.md).
-
-Source and render commands: [Remotion README](../../tools/launch-video/remotion/README.md).

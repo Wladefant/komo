@@ -41,6 +41,5 @@ Newest first. One `When X, do Y` line per operator correction, at most 20. The s
 
 ## Launch film
 
-- Render source lives in `tools/launch-video/remotion`, a Remotion project outside the package workspace. Keep recording dependencies out of the npm package and production browser runtime.
 - Use fixture feedback and the existing site/product components. The agent edits code; pinthread carries feedback. Keep that distinction visible.
-- Rendered media stays in the sibling `../pinthread-promo/out/`, outside Git. Follow `tools/launch-video/remotion/README.md` for exact rendering and preview commands.
+- Rendered media stays in the sibling `../pinthread-promo/out/`, outside Git. The Remotion render tool was removed from this repo (https://github.com/Wladefant/super-board/issues/518).

@@ -37,7 +37,7 @@ Local build, typecheck, all 111 tests and size budgets pass again. Production br
 
 ## Production motion revision — 2026-09-17
 
-[Current preview](https://8f2edb35.pinthread-wb5.pages.dev/launch-demo/?bpm=144). The preview imports and mounts the unmodified production MorphingMenu component, rather than recreating shell/row motion. Production edge CSS is copied at build time. Dock travel uses the product's 680/32/0.55 spring. The global animation seek now targets only the logo, so it cannot pause native drawer springs.
+[Current preview](https://8f2edb35.pinthread-wb5.pages.dev/launch-demo/?bpm=144). The preview imports and mounts the unmodified production dock component, rather than recreating shell/row motion. Production edge CSS is copied at build time. Dock travel uses the product's 680/32/0.55 spring. The global animation seek now targets only the logo, so it cannot pause native drawer springs.
 
 Visually inspected typed partial comment and caret, native drawer expansion/settling, right-edge orientation, and simplified title. The inert fixture preserves transport focus. Deployed route loads and plays with no console errors. Build, typecheck, 111 tests and size budgets pass; browser package gzip remains unchanged. Native drawer transitions settle after narrative pause/scrub: exact intermediate drawer frames are not promised by seekBeat. No new video files.
 
