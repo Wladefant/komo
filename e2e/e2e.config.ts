@@ -86,8 +86,11 @@ const appPort = new URL(appUrl).port || '4340';
 const app = {
   url: appUrl,
   command: {
-    executable: 'python',
-    args: ['-m', 'http.server', appPort, '--bind', '127.0.0.1', '-d', distDir],
+    // serve.mjs serves the site build and the widget fixture, and runs the local Pinthread API on 127.0.0.1:8788.
+    executable: 'node',
+    args: ['serve.mjs', appPort, '8788', distDir],
+    // On: the runner's 60 s readiness window is shorter than a cold wrangler start, so serve.mjs is started first
+    // (fresh throwaway D1 per serve.mjs start) and shared by the three targets. The tests isolate by unique text.
     reuseExisting: true,
   },
 };
