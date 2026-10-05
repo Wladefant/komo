@@ -89,10 +89,13 @@ export function createToolbar(
       props = next;
       // Without hover there is no intent before the first touch, so mount the
       // real menu once the page is idle: the first drag then has its handlers.
+      // A busy page may never go idle, so the wait is capped. A touch that lands
+      // first still holds the mount until it ends (see `pressed`).
       if (!idleMount && globalThis.matchMedia?.("(hover: none)").matches) {
         idleMount = true;
         const mount = () => void load();
-        if ("requestIdleCallback" in globalThis) requestIdleCallback(mount);
+        if ("requestIdleCallback" in globalThis)
+          requestIdleCallback(mount, { timeout: 500 });
         else setTimeout(mount, 0);
       }
       if (disposed) return;
