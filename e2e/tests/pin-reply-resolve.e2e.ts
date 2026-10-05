@@ -27,12 +27,13 @@ test('pin, reply and resolve: a guest places a pin, replies and resolves it, and
   // counts it: it finds its own thread by this run's unique pin text.
   const THREADS = threadsUrl('local');
   await app.open(`/fixture/${stamp}/`);
+  const appOrigin = new URL(process.env.APP_URL ?? 'http://127.0.0.1:4340').origin;
 
   // The API is the source of truth. Only the thread whose first comment is this run's pin text is returned.
   const server = async (): Promise<ServerThread[]> => {
     // Read from the test process, not the page: this is the API's own answer, with no widget or page state in between.
     // The API only answers its allowed origin (the app), so send it, and fail loudly on any other status.
-    const reply = await fetch(THREADS, { cache: 'no-store', headers: { origin: 'http://127.0.0.1:4343' } });
+    const reply = await fetch(THREADS, { cache: 'no-store', headers: { origin: appOrigin } });
     if (!reply.ok) throw new Error(`API ${reply.status} for ${THREADS}`);
     const body = (await reply.json()) as {
       threads?: { id?: string; resolved?: boolean; comments?: { body?: string; author?: string }[] }[];
@@ -63,17 +64,15 @@ test('pin, reply and resolve: a guest places a pin, replies and resolves it, and
   // Pin: comment mode, tap the paragraph, write, post, then give a name when asked.
   await screen.getByRole('button', { name: /Add comment/ }).tap();
   // In comment mode the widget's own catcher layer covers the page and takes the tap (that is the design: the
-  // paragraph is not tappable, so a locator tap on it is rightly "not actionable"). Tap through the catcher as a touch.
-  await browser.evaluate(() => {
-    const target = document.querySelector('#fixture-target')!.getBoundingClientRect();
-    const x = target.left + target.width / 2;
-    const y = target.top + target.height / 2;
-    // The catcher lives in the widget's shadow root, so the document's elementFromPoint only reports the host.
-    const catcher = document.querySelector('[data-branch-comments]')!.shadowRoot!.querySelector('.catch') as HTMLElement;
-    const init = { bubbles: true, cancelable: true, composed: true, clientX: x, clientY: y, pointerId: 1, pointerType: 'touch', isPrimary: true, button: 0 };
-    catcher.dispatchEvent(new PointerEvent('pointerdown', init));
-    catcher.dispatchEvent(new PointerEvent('pointerup', init));
+  // paragraph is not tappable, so a locator tap on it is rightly "not actionable"). Tap the catcher for real, at the
+  // centre of the paragraph. The catcher is a full-viewport layer, so a position in it is a viewport position.
+  const spot = await browser.evaluate(() => {
+    const box = document.querySelector('#fixture-target')!.getBoundingClientRect();
+    return { x: Math.round(box.left + box.width / 2), y: Math.round(box.top + box.height / 2) };
   });
+  const catcher = browser.locator('.catch');
+  await expect(catcher).toBeVisible();
+  await catcher.tap({ position: spot });
   await screen.getByRole('textbox', { name: 'Comment' }).fill(pinText);
   await screen.getByRole('button', { name: 'Post comment' }).tap();
   await screen.getByRole('textbox', { name: 'Your name' }).fill('QA Guest');
@@ -88,6 +87,7 @@ test('pin, reply and resolve: a guest places a pin, replies and resolves it, and
   // The list lives in a panel that the widget collapses and reopens by itself (on a phone it shrinks to a 52 px pill
   // while closed). So open it from the dock whenever it is collapsed, at most once per 1.5 s, and wait for a full card.
   let lastOpen = 0;
+  let lastBox = '';
   const reveal = async (): Promise<boolean> => {
     const mayOpen = Date.now() - lastOpen > 1500;
     const state = await browser.evaluate(
@@ -103,32 +103,28 @@ test('pin, reply and resolve: a guest places a pin, replies and resolves it, and
           open?.click();
           opened = !!open;
         }
-        return { inView, opened };
+        const rect = box ? [box.x, box.y, box.width, box.height].map(Math.round).join(',') : '';
+        return { inView, opened, rect };
       },
       { id: threadId, allowOpen: mayOpen },
     );
     if (state.opened) lastOpen = Date.now();
-    return state.inView;
+    // Settled: the same on-screen rect on two reads in a row, so a slide-in animation has finished.
+    const settled = state.inView && state.rect === lastBox;
+    lastBox = state.rect;
+    return settled;
   };
-  // Press a control inside this thread's list item. The list scrolls and slides inside a clipped panel, which the
-  // generic tap actionability check misreads as "outside the viewport", so press it as a click on the element itself.
-  const press = async (selector: string): Promise<void> => {
-    await until(reveal, (found) => found, `this thread's card in the widget (for ${selector})`);
-    const pressed = await browser.evaluate(
-      ({ id, inner }: { id: string; inner: string }) => {
-        const root = document.querySelector('[data-branch-comments]')?.shadowRoot;
-        const item = root?.querySelector(`.thread-item[data-thread="${id}"]`);
-        const control = item?.querySelector(inner) as HTMLElement | null;
-        control?.click();
-        return control ? 'ok' : `no ${inner} in ${(item?.outerHTML ?? 'no item').slice(0, 400)}`;
-      },
-      { id: threadId, inner: selector },
-    );
-    expect(pressed).toBe('ok');
+  // Tap a control of this thread's list item for real: bring the item fully into view first, then require the control
+  // to be visible. The shared store holds other runs' threads, so the control is picked by this thread's id.
+  const tapInThread = async (inner: string): Promise<void> => {
+    await until(reveal, (found) => found, `this thread's card in the widget (for ${inner})`);
+    const control = browser.locator(`[data-thread="${threadId}"] ${inner}`);
+    await expect(control).toBeVisible();
+    await control.tap();
   };
 
   // Reply: open this thread's card, write, send.
-  await press('.thread-card');
+  await tapInThread('.thread-card');
   await screen.getByRole('textbox', { name: 'Reply' }).fill(replyText);
   await screen.getByRole('button', { name: 'Send reply' }).tap();
   const afterReply = await until(server, (list) => (list[0]?.comments.length ?? 0) === 2, 'the reply on the server');
@@ -136,7 +132,7 @@ test('pin, reply and resolve: a guest places a pin, replies and resolves it, and
   expect(afterReply[0]?.comments).toEqual([`QA Guest: ${pinText}`, `QA Guest: ${replyText}`]);
 
   // Resolve: press the resolve control that belongs to this thread's id, then check the API by that id.
-  await press('.card-resolve');
+  await tapInThread('.card-resolve');
   const afterResolve = await until(server, (list) => list[0]?.resolved === true, 'the thread marked resolved on the server');
   expect(afterResolve).toHaveLength(1);
   expect(afterResolve[0]?.id).toBe(threadId);

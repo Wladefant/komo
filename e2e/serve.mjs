@@ -14,7 +14,7 @@ import { fileURLToPath } from 'node:url';
 
 const here = fileURLToPath(new URL('.', import.meta.url));
 const root = resolve(here, '..');
-const [staticPort, apiPort, siteDir] = [Number(process.argv[2] ?? 4343), Number(process.argv[3] ?? 8788), resolve(process.argv[4] ?? '.')];
+const [staticPort, apiPort, siteDir] = [Number(process.argv[2] ?? 4340), Number(process.argv[3] ?? 8788), resolve(process.argv[4] ?? '.')];
 const pkgDir = join(root, 'packages', 'pinthread');
 const fixtureDir = join(here, 'fixture');
 const widgetDir = mkdtempSync(join(tmpdir(), 'pinthread-e2e-widget-'));
