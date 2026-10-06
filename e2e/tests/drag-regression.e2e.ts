@@ -23,13 +23,33 @@ test('drag regression: a dragged dock keeps its placement after a mode change (P
   await browser.evaluate(() => localStorage.clear());
   await app.open('/');
   const result = await browser.evaluate(async () => {
-    const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
+    const frame = () => new Promise<number>((r) => requestAnimationFrame(r));
+    // Poll once per frame until the check passes; fail with its name after the deadline.
+    const until = async (name: string, check: () => boolean, ms = 5000) => {
+      const deadline = performance.now() + ms;
+      while (!check()) {
+        if (performance.now() > deadline) throw new Error('timed out waiting for ' + name);
+        await frame();
+      }
+    };
     const host = document.querySelector('[data-branch-comments]')!;
     const root = host.shadowRoot!;
     const toolbar = root.querySelector('.toolbar') as HTMLElement;
     const rect = () => {
       const r = toolbar.getBoundingClientRect();
       return [Math.round(r.x), Math.round(r.y)];
+    };
+    // The dock has settled when its own motion has stopped and its box holds still for 5 frames.
+    const settled = async (name: string) => {
+      let last = '', still = 0;
+      await until(name, () => {
+        const r = toolbar.getBoundingClientRect();
+        const box = [r.x, r.y, r.width, r.height].map(Math.round).join();
+        const running = toolbar.getAnimations().some((a) => a.playState === 'running');
+        still = !running && !toolbar.dataset.dragging && box === last ? still + 1 : 0;
+        last = box;
+        return still >= 5;
+      });
     };
     const surface = toolbar.querySelector('.dock__surface') as HTMLElement;
     const s = surface.getBoundingClientRect();
@@ -43,16 +63,19 @@ test('drag regression: a dragged dock keeps its placement after a mode change (P
     surface.dispatchEvent(new PointerEvent('pointerdown', ev(sx, sy)));
     for (let i = 1; i <= 12; i++) {
       window.dispatchEvent(new PointerEvent('pointermove', ev(sx - i * Math.min(7, sx / 12), sy - i * 30)));
-      await sleep(16);
+      await frame();
     }
     window.dispatchEvent(new PointerEvent('pointerup', ev(sx - 80, sy - 360)));
-    await sleep(700);
+    await settled('the drag to settle');
     const docked = rect();
-    const press = (id: string) => (root.querySelector('[data-dock-item="' + id + '"]') as HTMLElement).click();
-    press('comment');
-    await sleep(500);
-    press('browse');
-    await sleep(500);
+    const item = (id: string) => root.querySelector('[data-dock-item="' + id + '"]') as HTMLElement;
+    const press = async (id: string) => {
+      item(id).click();
+      await until(id + ' to become active', () => item(id)?.getAttribute('aria-current') === 'page');
+      await settled('the dock to settle after ' + id);
+    };
+    await press('comment');
+    await press('browse');
     return { init, docked, after: rect() };
   });
   // The drag moved the dock, and a re-render did not move it back.
@@ -64,19 +87,37 @@ test('drag regression: a dragged dock keeps its placement after a mode change (P
 test('drag regression: the first touch keeps the pressed control connected until release (PR 45)', async ({ app, browser }) => {
   await app.open('/');
   const result = await browser.evaluate(async () => {
-    const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
+    const frame = () => new Promise<number>((r) => requestAnimationFrame(r));
+    const until = async (name: string, check: () => boolean, ms = 5000) => {
+      const deadline = performance.now() + ms;
+      while (!check()) {
+        if (performance.now() > deadline) throw new Error('timed out waiting for ' + name);
+        await frame();
+      }
+    };
+    // A negative check: the state must hold for a bounded window in which the old
+    // code had already replaced the node. Returns false as soon as it breaks.
+    const holds = async (check: () => boolean, ms: number) => {
+      const deadline = performance.now() + ms;
+      while (performance.now() < deadline) {
+        if (!check()) return false;
+        await frame();
+      }
+      return check();
+    };
     const root = document.querySelector('[data-branch-comments]')!.shadowRoot!;
     const toolbar = root.querySelector('.toolbar') as HTMLElement;
     const control = toolbar.querySelector('[data-dock-item="browse"]') as HTMLElement;
     const touch = { pointerId: 9, pointerType: 'touch', isPrimary: true };
     toolbar.dispatchEvent(new PointerEvent('pointerenter', touch));
-    await sleep(400);
-    const connectedBeforePress = control.isConnected;
+    const connectedBeforePress = await holds(() => control.isConnected, 400);
     control.dispatchEvent(new PointerEvent('pointerdown', { ...touch, bubbles: true, composed: true, button: 0, buttons: 1 }));
-    await sleep(200);
-    const connectedWhilePressed = control.isConnected;
+    const connectedWhilePressed = await holds(() => control.isConnected, 200);
     document.dispatchEvent(new PointerEvent('pointerup', { ...touch, bubbles: true, composed: true }));
-    await sleep(600);
+    await until('the menu to replace the shell', () => {
+      const next = toolbar.querySelector('[data-dock-item="browse"]');
+      return !control.isConnected && !!next?.isConnected;
+    }).catch(() => undefined);
     const replacement = toolbar.querySelector('[data-dock-item="browse"]');
     return {
       connectedBeforePress,
