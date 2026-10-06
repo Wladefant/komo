@@ -1,3 +1,5 @@
+> **This repository is a frozen MIT snapshot.** Development of Pinthread continues in a private repository. New releases are closed source. Everything published here, and every npm version up to 0.7.0, stays under the MIT license (see [LICENSE](LICENSE)). Pinthread is a fork of [tjcages/komo](https://github.com/tjcages/komo) by Lué Studio (MIT). Website: https://pinthread.dev
+
 # pinthread
 
 [![npm version](https://img.shields.io/npm/v/pinthread)](https://www.npmjs.com/package/pinthread)
