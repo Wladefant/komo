@@ -33,7 +33,9 @@ it("exports all tables privately, carries a consistent revision, and imports in 
     true
   );
   const path = join(directory, "feedback.json");
-  expect((await stat(path)).mode & 0o777).toBe(0o600);
+  if (process.platform !== "win32") {
+    expect((await stat(path)).mode & 0o777).toBe(0o600);
+  }
   expect(JSON.parse(await readFile(path, "utf8")).tables.users).toHaveLength(
     53
   );

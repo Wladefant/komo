@@ -10,6 +10,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import type { Thread } from "../src/types";
 
 const root = fileURLToPath(new URL("../../../", import.meta.url));
+const isWin = process.platform === "win32";
 let directory = "",
   worker: ChildProcess | undefined,
   port = 0,
@@ -138,7 +139,7 @@ beforeAll(async () => {
       "--config",
       configPath,
     ],
-    { cwd: root, timeout: 45000 }
+    { cwd: root, timeout: 45000, shell: isWin, windowsHide: true }
   );
   const seed = join(directory, "seed.sql");
   const h = (value: string) => createHash("sha256").update(value).digest("hex");
@@ -192,7 +193,7 @@ beforeAll(async () => {
       "--file",
       seed,
     ],
-    { cwd: root, timeout: 45000 }
+    { cwd: root, timeout: 45000, shell: isWin, windowsHide: true }
   );
   worker = spawn(
     "pnpm",
@@ -207,7 +208,13 @@ beforeAll(async () => {
       "--persist-to",
       join(directory, "state"),
     ],
-    { cwd: root, stdio: ["ignore", "pipe", "pipe"], detached: true }
+    {
+      cwd: root,
+      stdio: ["ignore", "pipe", "pipe"],
+      detached: !isWin,
+      shell: isWin,
+      windowsHide: true,
+    }
   );
   worker.stdout?.on("data", (chunk) => (output += String(chunk)));
   worker.stderr?.on("data", (chunk) => (output += String(chunk)));
@@ -224,13 +231,27 @@ beforeAll(async () => {
 afterAll(async () => {
   if (worker?.pid) {
     try {
-      process.kill(-worker.pid, "SIGTERM");
+      if (isWin) {
+        const { spawnSync } = await import("node:child_process");
+        spawnSync("taskkill", ["/pid", String(worker.pid), "/t", "/f"], {
+          windowsHide: true,
+          stdio: "ignore",
+        });
+      } else {
+        process.kill(-worker.pid, "SIGTERM");
+      }
     } catch {
       /* Already stopped. */
     }
   }
-  if (directory) await rm(directory, { recursive: true, force: true });
-});
+  if (directory) {
+    try {
+      await rm(directory, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
+    } catch {
+      /* Temp directory cleanup best-effort on Windows. */
+    }
+  }
+}, 30000);
 it("connects from the intended site with a one-use Google handoff and project-scoped session", async () => {
   const site = "https://new-site.example";
   const setup = (await (
