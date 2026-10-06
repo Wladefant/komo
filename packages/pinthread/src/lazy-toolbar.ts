@@ -23,19 +23,22 @@ export function createToolbar(
     | undefined;
   let loading: Promise<void> | undefined;
   let disposed = false;
-  let pressed = false;
+  // Pointers still down on the shell. The menu waits until the last one lifts,
+  // so a second finger's release cannot replace the node under the first.
+  const pressed = new Set<number>();
   let idleMount = false;
   let release: (() => void) | undefined;
   const events = new AbortController();
   element.addEventListener(
     "pointerdown",
-    () => {
-      pressed = true;
+    (event) => {
+      pressed.add(event.pointerId);
     },
     { capture: true, signal: events.signal },
   );
-  const finish = () => {
-    pressed = false;
+  const finish = (event: PointerEvent) => {
+    pressed.delete(event.pointerId);
+    if (pressed.size) return;
     setTimeout(() => {
       release?.();
       release = undefined;
@@ -54,7 +57,7 @@ export function createToolbar(
     if (loading) return loading;
     loading = import("./toolbar-runtime.js")
       .then(async (module) => {
-        if (pressed)
+        if (pressed.size)
           await new Promise<void>((resolve) => {
             release = resolve;
           });
@@ -78,7 +81,7 @@ export function createToolbar(
     (event) => {
       // A touch enters right before its pointerdown. Mounting now would replace
       // the node under the finger and send the whole gesture to a detached node.
-      if (event.pointerType === "touch") pressed = true;
+      if (event.pointerType === "touch") pressed.add(event.pointerId);
       void load();
     },
     { once: true },
