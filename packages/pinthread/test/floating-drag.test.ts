@@ -178,7 +178,9 @@ describe("floating drag end paths", () => {
   // does it. Every event carries an explicit time, so the release coast is
   // predictable.
   function mountDrag() {
-    const dom = new JSDOM('<div id="toolbar"></div>');
+    const dom = new JSDOM(
+      '<div id="toolbar"><span class="dock__grip"></span></div>',
+    );
     const { window } = dom;
     vi.stubGlobal("window", window);
     vi.stubGlobal("document", window.document);
@@ -233,8 +235,30 @@ describe("floating drag end paths", () => {
       vi.unstubAllGlobals();
       dom.window.close();
     };
-    return { toolbar, captured, save, settled, pointer, resting, close };
+    const grip = toolbar.querySelector<HTMLElement>(".dock__grip")!;
+    return { toolbar, grip, captured, save, settled, pointer, resting, close };
   }
+
+  it("keeps the drag when the touched child hands its capture to the handle", () => {
+    const { toolbar, grip, save, settled, pointer, close } = mountDrag();
+    try {
+      pointer("pointerdown", 1, 0, 120, grip);
+      pointer("pointermove", 1, 16, 160);
+      // A touch starts captured to the node under the finger. When the
+      // handle takes the capture, that node's loss bubbles to the handle.
+      pointer("lostpointercapture", 1, 18, 160, grip);
+      expect(toolbar.dataset.dragging).toBe("true");
+      expect(settled).not.toHaveBeenCalled();
+
+      save.mockClear();
+      pointer("pointermove", 1, 32, 180);
+      expect(save).toHaveBeenCalledTimes(1);
+      pointer("pointerup", 1, 300, 180);
+      expect(settled).toHaveBeenCalledOnce();
+    } finally {
+      close();
+    }
+  });
 
   it("keeps the first drag when a second finger touches the handle", () => {
     const { toolbar, captured, save, settled, pointer, resting, close } =

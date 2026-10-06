@@ -100,7 +100,7 @@ export function floatingDrag(
             handle.setPointerCapture(event.pointerId);
             // The browser can take the capture away, for example for a
             // gesture of its own. Treat that like a cancel.
-            handle.addEventListener("lostpointercapture", end);
+            handle.addEventListener("lostpointercapture", lost);
           } catch {
             /* The pointer may already be gone; window listeners still end it. */
           }
@@ -173,11 +173,17 @@ export function floatingDrag(
         handle.addEventListener("click", swallow, { capture: true, once: true });
         setTimeout(() => handle.removeEventListener("click", swallow, true), 0);
       };
+      // A touch starts captured to the node under the finger. Taking the
+      // capture above makes that node lose it, and its event bubbles here.
+      // Only the handle's own loss ends the drag.
+      const lost = (e: PointerEvent) => {
+        if (e.target === handle) end(e);
+      };
       const stop = () => {
         window.removeEventListener("pointermove", move, true);
         window.removeEventListener("pointerup", end, true);
         window.removeEventListener("pointercancel", end, true);
-        handle.removeEventListener("lostpointercapture", end);
+        handle.removeEventListener("lostpointercapture", lost);
         if (handle.hasPointerCapture?.(event.pointerId))
           handle.releasePointerCapture(event.pointerId);
         delete element.dataset.dragging;
