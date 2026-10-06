@@ -428,7 +428,10 @@ export function initComments(options: CommentsOptions): CommentsController {
   let draftText = "",
     guestName = "",
     editing: string | null = null,
-    editText = "";
+    editText = "",
+    // The reply this user just sent. The next dialog render that shows it
+    // scrolls the message list to it.
+    revealComment: string | null = null;
   let closePicker: ((immediate?: boolean) => void) | undefined;
   let submitAfterIdentity: (() => Promise<void>) | null = null;
   let lastPage = page(),
@@ -3631,6 +3634,7 @@ export function initComments(options: CommentsOptions): CommentsController {
     };
     if (!comment.body.trim()) return;
     if (thread) {
+      revealComment = comment.id;
       replies.delete(thread.id);
       await saveOptimistic(
         changeThread(thread.id, (current) => ({
@@ -4366,6 +4370,15 @@ export function initComments(options: CommentsOptions): CommentsController {
     openingPreview = null;
     const messages = dialog.querySelector(".messages");
     if (messages) messages.scrollTop = scroll;
+    if (messages && revealComment) {
+      const reply = messages.querySelector(
+        `[data-comment="${CSS.escape(optimistic.id(revealComment))}"]`,
+      );
+      if (reply) {
+        revealComment = null;
+        messages.scrollTop = messages.scrollHeight;
+      }
+    }
     if (account && !changing) dialog.scrollTop = accountScroll;
     if (focusKey) {
       const next = dialog.querySelector<HTMLInputElement | HTMLTextAreaElement>(

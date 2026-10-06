@@ -3,17 +3,22 @@
  * Pre-fix upstream commit:  6fb75d7b8fc045b4c5114e042e64a5626785843d
  * Fixed upstream commit:    90df2160bc55be7bf127c3482f381d148863276c
  *
- * Both tests read real widget state through the open shadow root of [data-branch-comments] and drive the dock with
- * touch pointer events, so they need no model call.
+ * The first two tests read real widget state through the open shadow root of [data-branch-comments] and drive the
+ * dock with synthetic touch pointer events, so they need no model call.
  *
  * 1. A dragged dock keeps its place when the mode changes. Pre-fix, compact (mobile) layouts rebuilt the dock at
  *    left:50% on every render, so it snapped back to the bottom centre. The edge layout at 1440 never had that
  *    bug, so this test passes there on both commits and fails on 390x844 and 390x420 only before the fix.
  * 2. The first touch must not replace the control under the finger. Pre-fix, pointerenter(touch) mounted the menu
  *    in a microtask and detached the node before pointerdown. This fails on every viewport before the fix.
+ * 3. A real touch drag moves the dock and it settles (https://github.com/Wladefant/komo/issues/37). Synthetic
+ *    PointerEvents never get the browser's implicit touch capture, so tests 1 and 2 passed on cddbbec, which ended
+ *    every real touch drag at its first move. This test turns on touch emulation and sends real touches through
+ *    CDP Input.dispatchTouchEvent on the target's own page, so the browser captures the pointer as on a phone.
  */
 import { test } from '@e2e-dev/web';
 import { expect } from 'e2e';
+import type {} from '../e2e.config.ts';
 import { installRequestGuard } from '../e2e.request-guard.ts';
 
 installRequestGuard();
@@ -128,4 +133,77 @@ test('drag regression: the first touch keeps the pressed control connected until
   expect(result.connectedBeforePress).toBe(true);
   expect(result.connectedWhilePressed).toBe(true);
   expect(result.menuReplacedAfterRelease).toBe(true);
+});
+
+test('drag regression: a real touch drag moves the dock and it settles (komo#37)', async ({ app, browser }) => {
+  await app.open('/');
+  await browser.evaluate(() => localStorage.clear());
+  await app.open('/');
+  // The target's own live page, published by e2e.config.ts. The target names are the viewport sizes.
+  const size = await browser.evaluate(() => `${innerWidth}x${innerHeight}`);
+  const live = globalThis.pinthreadLiveSurfaces?.[size];
+  if (!live) throw new Error(`no live page for target ${size}`);
+  const cdp = await live.context().newCDPSession(live.page());
+  try {
+    // A touch screen from the first paint, as on a phone.
+    await cdp.send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 5 });
+    await browser.reload();
+    // Wait for the dock to rest, then take a point on its surface edge: a child of the drag handle, so the touch
+    // starts captured to that child, as a finger on a phone does.
+    const start = await browser.evaluate(async () => {
+      const frame = () => new Promise<number>((r) => requestAnimationFrame(r));
+      const deadline = performance.now() + 5000;
+      let last = '', still = 0;
+      for (;;) {
+        const toolbar = document.querySelector('[data-branch-comments]')?.shadowRoot?.querySelector<HTMLElement>('.toolbar');
+        const surface = toolbar?.querySelector('.dock__surface');
+        if (toolbar && surface) {
+          const r = toolbar.getBoundingClientRect();
+          const box = [r.x, r.y, r.width, r.height].map(Math.round).join();
+          const running = toolbar.getAnimations().some((a) => a.playState === 'running');
+          still = !running && box === last ? still + 1 : 0;
+          last = box;
+          if (still >= 5) {
+            const s = surface.getBoundingClientRect();
+            return { x: Math.round(s.x + 4), y: Math.round(s.y + s.height / 2), top: Math.round(r.y), coarse: matchMedia('(pointer: coarse)').matches };
+          }
+        }
+        if (performance.now() > deadline) throw new Error('timed out waiting for the dock to rest');
+        await frame();
+      }
+    });
+    expect(start.coarse).toBe(true);
+    // CDP compares each event's touch points with the previous event, so a move lists the same id and an end lists none.
+    const touch = (type: 'touchStart' | 'touchMove' | 'touchEnd', x = 0, y = 0) =>
+      cdp.send('Input.dispatchTouchEvent', { type, touchPoints: type === 'touchEnd' ? [] : [{ x, y, id: 1 }] });
+    await touch('touchStart', start.x, start.y);
+    for (let i = 1; i <= 12; i++) await touch('touchMove', start.x - i * Math.min(7, start.x / 12), start.y - i * 30);
+    const dragging = await browser.evaluate(
+      () => document.querySelector('[data-branch-comments]')?.shadowRoot?.querySelector<HTMLElement>('.toolbar')?.dataset.dragging ?? '',
+    );
+    await touch('touchEnd');
+    const after = await browser.evaluate(async () => {
+      const frame = () => new Promise<number>((r) => requestAnimationFrame(r));
+      const toolbar = document.querySelector('[data-branch-comments]')?.shadowRoot?.querySelector<HTMLElement>('.toolbar');
+      if (!toolbar) throw new Error('no dock toolbar');
+      const deadline = performance.now() + 5000;
+      let last = '', still = 0;
+      // Settled: no running dock animation, no drag in progress, and the same box for 5 frames.
+      while (still < 5) {
+        if (performance.now() > deadline) throw new Error('timed out waiting for the dock to settle');
+        await frame();
+        const r = toolbar.getBoundingClientRect();
+        const box = [r.x, r.y, r.width, r.height].map(Math.round).join();
+        const running = toolbar.getAnimations().some((a) => a.playState === 'running');
+        still = !running && !toolbar.dataset.dragging && box === last ? still + 1 : 0;
+        last = box;
+      }
+      return { top: Math.round(toolbar.getBoundingClientRect().y) };
+    });
+    // The drag was still live after the last move, and the dock rests well away from where it started.
+    expect(dragging).toBe('true');
+    expect(Math.abs(after.top - start.top)).toBeGreaterThan(100);
+  } finally {
+    await cdp.detach();
+  }
 });

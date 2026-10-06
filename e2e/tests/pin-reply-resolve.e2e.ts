@@ -9,6 +9,7 @@
  * Issue: https://github.com/Wladefant/komo/issues/23
  * Touch hit areas (44 px or more): https://github.com/Wladefant/komo/issues/32, https://github.com/Wladefant/komo/issues/31,
  * https://github.com/Wladefant/komo/issues/36
+ * The new reply in view with its actions in reach: https://github.com/Wladefant/komo/issues/39
  */
 import { test } from '@e2e-dev/web';
 import { expect } from 'e2e';
@@ -120,6 +121,28 @@ test('pin, reply and resolve: a guest places a pin, replies and resolves it, and
     // Every control is found, and none is under 44 px on either axis. A failure names the control and its size.
     expect(areas.filter((area) => area.width < 44 || area.height < 44)).toEqual([]);
   };
+  // A phone has the coarse rules from the first paint, so a layout the widget builds while they are on is the one a
+  // user sees. Keep the same copy on across a step (on: true), then remove it (on: false).
+  const phoneRules = async (on: boolean): Promise<void> => {
+    await browser.evaluate(async (enable: boolean) => {
+      const root = document.querySelector('[data-branch-comments]')!.shadowRoot!;
+      root.querySelector('style[data-e2e-phone]')?.remove();
+      if (enable) {
+        const phone = document.createElement('style');
+        phone.dataset.e2ePhone = '';
+        phone.textContent = [...root.querySelectorAll('style')]
+          .flatMap((style) => [...(style.sheet?.cssRules ?? [])])
+          .filter((rule): rule is CSSMediaRule => rule instanceof CSSMediaRule && ['(pointer: coarse)', '(hover: none)'].includes(rule.media.mediaText))
+          .flatMap((rule) => [...rule.cssRules].map((inner) => inner.cssText))
+          .join('\n');
+        root.append(phone);
+      }
+      window.dispatchEvent(new Event('resize'));
+      const frames = Promise.withResolvers<void>();
+      requestAnimationFrame(() => requestAnimationFrame(() => frames.resolve()));
+      await frames.promise;
+    }, on);
+  };
 
   expect(await server()).toEqual([]);
 
@@ -200,11 +223,33 @@ test('pin, reply and resolve: a guest places a pin, replies and resolves it, and
     '.message-reaction',
     '.reply-composer .send',
   ]);
+  // Send the reply with the phone layout on, so the thread lays out the new reply as a phone does.
+  await phoneRules(true);
   await screen.getByRole('textbox', { name: 'Reply' }).fill(replyText);
   await screen.getByRole('button', { name: 'Send reply' }).tap();
   const afterReply = await until(server, (list) => (list[0]?.comments.length ?? 0) === 2, 'the reply on the server');
   expect(afterReply[0]?.id).toBe(threadId);
   expect(afterReply[0]?.comments).toEqual([`QA Guest: ${pinText}`, `QA Guest: ${replyText}`]);
+  // The whole new reply shows inside the message list, above the composer, with no scrolling by the test.
+  const reply = await browser.evaluate(async (text: string) => {
+    const root = document.querySelector('[data-branch-comments]')!.shadowRoot!;
+    await Promise.all(
+      root
+        .getAnimations()
+        .filter((animation) => animation.effect?.getComputedTiming().endTime !== Infinity)
+        .map((animation) => animation.finished.catch(() => undefined)),
+    );
+    const list = root.querySelector('.dialog .messages');
+    const item = [...(list?.querySelectorAll<HTMLElement>('[data-comment]') ?? [])].at(-1);
+    if (!list || !item?.textContent?.includes(text)) return { found: false, inView: false, item: '', list: '' };
+    const box = item.getBoundingClientRect();
+    const view = list.getBoundingClientRect();
+    const inView = box.top >= view.top - 1 && box.bottom <= view.bottom + 1;
+    return { found: true, inView, item: `${Math.round(box.top)}-${Math.round(box.bottom)}`, list: `${Math.round(view.top)}-${Math.round(view.bottom)}` };
+  }, replyText);
+  expect(reply).toMatchObject({ found: true, inView: true });
+  await expectTouchTargets(['.dialog .messages [data-comment]:last-child summary[aria-label="Message actions"]']);
+  await phoneRules(false);
 
   // Resolve: press the resolve control that belongs to this thread's id, then check the API by that id.
   await tapInThread('.card-resolve');
