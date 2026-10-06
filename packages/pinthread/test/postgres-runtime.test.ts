@@ -1,3 +1,5 @@
+import { readFile } from "node:fs/promises";
+import { fileURLToPath } from "node:url";
 import { afterAll, beforeAll, expect, it, vi } from "vitest";
 import { Pool } from "pg";
 import { postgresDatabase } from "../server/postgres";
@@ -158,5 +160,77 @@ run(
         .bind("review")
         .first<{ comments: number; bytes: number }>(),
     ).toEqual({ comments: 0, bytes: 0 });
+  },
+);
+
+
+run(
+  "PostgreSQL migration 002 renames legacy komo_schema, applies version 2, and raises pinthread_quota_exceeded",
+  async () => {
+    const legacySchema = `legacy_${crypto.randomUUID().replaceAll("-", "")}`;
+    await admin.query(`CREATE SCHEMA ${legacySchema}`);
+    const legacyUrl = new URL(connection!);
+    legacyUrl.searchParams.set("options", `-c search_path=${legacySchema}`);
+    const legacyDb = postgresDatabase(legacyUrl.href);
+
+    const client = await admin.connect();
+    try {
+      await client.query(`SET search_path TO ${legacySchema}`);
+      // Simulate legacy database before rename: tracked in komo_schema with version 1
+      await client.query("CREATE TABLE komo_schema (version integer PRIMARY KEY)");
+      await client.query("INSERT INTO komo_schema (version) VALUES (1)");
+      const sql001 = await readFile(
+        fileURLToPath(new URL("../server/postgres/001_initial.sql", import.meta.url)),
+        "utf8",
+      );
+      await client.query(sql001);
+
+      await client.query(
+        "INSERT INTO users(id,name,verified) VALUES('google:u1','User 1',1)",
+      );
+      await client.query(
+        "INSERT INTO workspaces(id,owner_id,repo,origins,created_at) VALUES('p1','google:u1','r1','[]',1)",
+      );
+      await client.query(
+        "INSERT INTO project_quotas(project,max_comments,max_bytes,comments,bytes) VALUES('p1',1,100000,0,0)",
+      );
+
+      // Before migration 002: komo_quota raises komo_quota_exceeded
+      let beforeErr: any;
+      try {
+        await client.query("SELECT komo_quota('p1', 2, 0)");
+      } catch (err: any) {
+        beforeErr = err;
+      }
+      expect(beforeErr?.message).toContain("komo_quota_exceeded");
+
+      // Run migrate(): should rename komo_schema to pinthread_schema and apply 002
+      await legacyDb.migrate();
+
+      const tables = await client.query<{ legacy: string | null; current: string | null }>(
+        "SELECT to_regclass('komo_schema') AS legacy, to_regclass('pinthread_schema') AS current",
+      );
+      expect(tables.rows[0].legacy).toBeNull();
+      expect(tables.rows[0].current).not.toBeNull();
+
+      const versions = await client.query<{ version: number }>(
+        "SELECT version FROM pinthread_schema ORDER BY version",
+      );
+      expect(versions.rows.map((r) => r.version)).toEqual([1, 2]);
+
+      // After migration 002: komo_quota raises pinthread_quota_exceeded
+      let afterErr: any;
+      try {
+        await client.query("SELECT komo_quota('p1', 2, 0)");
+      } catch (err: any) {
+        afterErr = err;
+      }
+      expect(afterErr?.message).toContain("pinthread_quota_exceeded");
+      expect(afterErr?.message).not.toContain("komo_quota_exceeded");
+    } finally {
+      client.release();
+      await legacyDb.close();
+      await admin.query(`DROP SCHEMA ${legacySchema} CASCADE`);
+    }
   },
 );

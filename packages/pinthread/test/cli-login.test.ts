@@ -148,7 +148,9 @@ it("keeps login credentials private and rejects a foreign callback origin", asyn
     expect(
       JSON.parse(await readFile(join(directory, file), "utf8")).token
     ).toBe("test-session-secret");
-    expect((await stat(join(directory, file))).mode & 0o777).toBe(0o600);
+    if (process.platform !== "win32") {
+      expect((await stat(join(directory, file))).mode & 0o777).toBe(0o600);
+    }
     await promisify(execFile)(process.execPath, [entry, "logout"], {
       env,
       cwd: directory,
