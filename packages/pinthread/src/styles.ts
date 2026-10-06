@@ -1795,11 +1795,14 @@ textarea {
   top: 0;
   bottom: auto;
 }
+/* The lazy toolbar has no inline shell size, so the swap must live in CSS too. */
 .dock[data-vertical="true"] .dock__surface {
   left: 0;
   top: 0;
   bottom: auto;
   translate: none;
+  width: var(--dock-height);
+  height: var(--dock-width);
 }
 .dock[data-edge="right"] .dock__surface {
   left: auto;
