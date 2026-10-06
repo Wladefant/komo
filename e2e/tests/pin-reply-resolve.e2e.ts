@@ -61,11 +61,14 @@ test('pin, reply and resolve: a guest places a pin, replies and resolves it, and
     return last;
   };
   // The engine taps with a mouse, so the page always matches a fine pointer. To check the touch hit areas, copy the
-  // widget's own `@media (pointer: coarse)` rules into an unconditional style, hit-test each control from its centre
-  // with elementFromPoint along both axes, then remove the copy before the tap.
+  // widget's own `@media (pointer: coarse)` and `@media (hover: none)` rules (a touch screen matches both) into an
+  // unconditional style, hit-test each control from its centre with elementFromPoint along both axes, then remove the
+  // copy before the tap. Without the `(hover: none)` rules, the desktop-only shortcut tip covers the sidebar head.
   // The thread dialog opens with a 250 ms size animation that holds its height. The copied rules add spacing, so a
   // measurement inside that animation sees a clipped message list. Wait for every finite widget animation to end
-  // first: a phone has the coarse rules from the start, so the settled layout is the one a user taps.
+  // first: a phone has the coarse rules from the start, so the settled layout is the one a user taps. The widget
+  // places its sidebar tips from measured button boxes, so fire `resize` after the copy (and after removing it) to let
+  // the widget lay them out again, as it does on a touch screen from the start.
   const expectTouchTargets = async (selectors: string[]): Promise<void> => {
     const areas = await browser.evaluate(async (list: string[]) => {
       const root = document.querySelector('[data-branch-comments]')!.shadowRoot!;
@@ -78,10 +81,17 @@ test('pin, reply and resolve: a guest places a pin, replies and resolves it, and
       const coarse = document.createElement('style');
       coarse.textContent = [...root.querySelectorAll('style')]
         .flatMap((style) => [...(style.sheet?.cssRules ?? [])])
-        .filter((rule) => rule instanceof CSSMediaRule && rule.media.mediaText === '(pointer: coarse)')
+        .filter((rule) => rule instanceof CSSMediaRule && ['(pointer: coarse)', '(hover: none)'].includes(rule.media.mediaText))
         .flatMap((rule) => [...(rule as CSSMediaRule).cssRules].map((inner) => inner.cssText))
         .join('\n');
       root.append(coarse);
+      const relayout = async (): Promise<void> => {
+        window.dispatchEvent(new Event('resize'));
+        const frames = Promise.withResolvers<void>();
+        requestAnimationFrame(() => requestAnimationFrame(() => frames.resolve()));
+        await frames.promise;
+      };
+      await relayout();
       try {
         return list.map((selector) => {
           const target = root.querySelector(selector);
@@ -104,6 +114,7 @@ test('pin, reply and resolve: a guest places a pin, replies and resolves it, and
         });
       } finally {
         coarse.remove();
+        await relayout();
       }
     }, selectors);
     // Every control is found, and none is under 44 px on either axis. A failure names the control and its size.
@@ -200,19 +211,22 @@ test('pin, reply and resolve: a guest places a pin, replies and resolves it, and
   // The "Comment resolved" notice opens at once and closes after 5 s, so measure its controls before the API wait.
   await expect(screen.getByRole('button', { name: 'Undo' })).toBeVisible();
   await expectTouchTargets(['.floating-notice .notice-action', '.floating-notice [aria-label="Dismiss notice"]']);
+  // Dismiss it now, inside those 5 s: on a short phone it sits over the sidebar head. Dismiss only hides it.
+  await screen.getByRole('button', { name: 'Dismiss notice' }).tap();
+  await expect(screen.getByRole('button', { name: 'Undo' })).toHaveCount(0);
   const afterResolve = await until(server, (list) => list[0]?.resolved === true, 'the thread marked resolved on the server');
   expect(afterResolve).toHaveLength(1);
   expect(afterResolve[0]?.id).toBe(threadId);
 
-  // Sidebar head and filter menu. Dismiss the notice first: on a short phone it can sit over the sidebar head.
-  await screen.getByRole('button', { name: 'Dismiss notice' }).tap();
-  await expect(screen.getByRole('button', { name: 'Undo' })).toHaveCount(0);
+  // Sidebar head and filter menu.
+  // The sidebar has two selection menus (filter and pages); scope to the filter menu.
+  const filterTrigger = 'summary.selection-trigger[aria-label="Filter comments"]';
   await expectTouchTargets([
-    '.selection-menu > summary.selection-trigger',
+    filterTrigger,
     '.panel-head .sidebar-search-trigger',
     '.panel-head [aria-label="Close sidebar"]',
   ]);
-  await browser.locator('.selection-menu > summary.selection-trigger').tap();
+  await browser.locator(filterTrigger).tap();
   await expect(screen.getByRole('menuitemradio', { name: 'Resolved' })).toBeVisible();
-  await expectTouchTargets([1, 2, 3].map((n) => `.selection-menu .comment-menu-items > :nth-child(${n})`));
+  await expectTouchTargets([1, 2, 3].map((n) => `.comment-menu-items[aria-label="Filter comments"] > :nth-child(${n})`));
 });
