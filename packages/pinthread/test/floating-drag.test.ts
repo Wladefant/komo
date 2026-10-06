@@ -172,3 +172,180 @@ describe("floating placement", () => {
     }
   });
 });
+
+describe("floating drag end paths", () => {
+  // One toolbar under a drag, with pointer capture tracked the way a browser
+  // does it. Every event carries an explicit time, so the release coast is
+  // predictable.
+  function mountDrag() {
+    const dom = new JSDOM(
+      '<div id="toolbar"><span class="dock__grip"></span></div>',
+    );
+    const { window } = dom;
+    vi.stubGlobal("window", window);
+    vi.stubGlobal("document", window.document);
+    vi.stubGlobal("matchMedia", () => ({ matches: true }));
+    const toolbar = window.document.querySelector<HTMLElement>("#toolbar")!;
+    toolbar.getBoundingClientRect = () =>
+      ({ left: 100, top: 100, width: 200, height: 52 }) as DOMRect;
+    toolbar.getAnimations = () => [];
+    const captured = new Set<number>();
+    Object.assign(toolbar, {
+      setPointerCapture: (id: number) => void captured.add(id),
+      hasPointerCapture: (id: number) => captured.has(id),
+      releasePointerCapture: (id: number) => void captured.delete(id),
+    });
+    const save = vi.fn();
+    const settled = vi.fn();
+    const abort = new window.AbortController();
+    floatingDrag(toolbar, toolbar, save, abort.signal, undefined, settled);
+    const pointer = (
+      type: string,
+      id: number,
+      at: number,
+      x: number,
+      target: EventTarget = window,
+    ) => {
+      const event = new window.MouseEvent(type, {
+        bubbles: true,
+        cancelable: true,
+        button: 0,
+        clientX: x,
+        clientY: 120,
+      });
+      // The first finger is the primary pointer; a second one never is.
+      Object.defineProperties(event, {
+        pointerId: { value: id },
+        isPrimary: { value: id === 1 },
+        timeStamp: { value: at },
+      });
+      target.dispatchEvent(event);
+    };
+    // Where the dock rests when a drag ends without a coast.
+    const resting = () =>
+      settle(
+        { x: 100, y: 100 },
+        200,
+        52,
+        window.document.documentElement.clientWidth,
+        window.innerHeight,
+      );
+    const close = () => {
+      abort.abort();
+      vi.unstubAllGlobals();
+      dom.window.close();
+    };
+    const grip = toolbar.querySelector<HTMLElement>(".dock__grip")!;
+    return { toolbar, grip, captured, save, settled, pointer, resting, close };
+  }
+
+  it("keeps the drag when the touched child hands its capture to the handle", () => {
+    const { toolbar, grip, save, settled, pointer, close } = mountDrag();
+    try {
+      pointer("pointerdown", 1, 0, 120, grip);
+      pointer("pointermove", 1, 16, 160);
+      // A touch starts captured to the node under the finger. When the
+      // handle takes the capture, that node's loss bubbles to the handle.
+      pointer("lostpointercapture", 1, 18, 160, grip);
+      expect(toolbar.dataset.dragging).toBe("true");
+      expect(settled).not.toHaveBeenCalled();
+
+      save.mockClear();
+      pointer("pointermove", 1, 32, 180);
+      expect(save).toHaveBeenCalledTimes(1);
+      pointer("pointerup", 1, 300, 180);
+      expect(settled).toHaveBeenCalledOnce();
+    } finally {
+      close();
+    }
+  });
+
+  it("keeps the first drag when a second finger touches the handle", () => {
+    const { toolbar, captured, save, settled, pointer, resting, close } =
+      mountDrag();
+    try {
+      pointer("pointerdown", 1, 0, 120, toolbar);
+      pointer("pointermove", 1, 16, 160);
+      expect(toolbar.dataset.dragging).toBe("true");
+
+      pointer("pointerdown", 2, 20, 260, toolbar);
+      expect(toolbar.dataset.dragging).toBe("true");
+      expect(captured.has(1)).toBe(true);
+
+      // The first finger still moves the dock; the second one does not.
+      save.mockClear();
+      pointer("pointermove", 1, 32, 180);
+      expect(save).toHaveBeenCalledTimes(1);
+      pointer("pointermove", 2, 40, 300);
+      pointer("pointerup", 2, 50, 300);
+      expect(save).toHaveBeenCalledTimes(1);
+      expect(settled).not.toHaveBeenCalled();
+
+      // The first finger's release settles and saves the placement.
+      pointer("pointerup", 1, 300, 180);
+      expect(settled).toHaveBeenCalledOnce();
+      expect(save).toHaveBeenLastCalledWith(resting());
+      expect(toolbar.dataset.dragging).toBeUndefined();
+      expect(captured.size).toBe(0);
+    } finally {
+      close();
+    }
+  });
+
+  it("settles once and leaves nothing behind when a pinch cancels the drag", () => {
+    const { toolbar, captured, save, settled, pointer, resting, close } =
+      mountDrag();
+    try {
+      pointer("pointerdown", 1, 0, 120, toolbar);
+      pointer("pointermove", 1, 16, 160);
+      // A second finger lands and the browser takes both pointers for a pinch.
+      pointer("pointerdown", 2, 20, 260, toolbar);
+      pointer("pointercancel", 2, 30, 260);
+      expect(settled).not.toHaveBeenCalled();
+      expect(toolbar.dataset.dragging).toBe("true");
+
+      // A cancel never coasts, even right after a fast move.
+      pointer("pointercancel", 1, 40, 160);
+      expect(settled).toHaveBeenCalledOnce();
+      expect(save).toHaveBeenLastCalledWith(resting());
+      expect(toolbar.dataset.dragging).toBeUndefined();
+      expect(toolbar.dataset.snapX).toBeUndefined();
+      expect(captured.size).toBe(0);
+
+      // No listener survives: later events for the same pointer do nothing.
+      save.mockClear();
+      pointer("pointermove", 1, 60, 200);
+      pointer("pointerup", 1, 70, 200);
+      expect(save).not.toHaveBeenCalled();
+      expect(settled).toHaveBeenCalledOnce();
+    } finally {
+      close();
+    }
+  });
+
+  it("ends the drag like a cancel when the browser takes the pointer capture", () => {
+    const { toolbar, captured, save, settled, pointer, resting, close } =
+      mountDrag();
+    try {
+      pointer("pointerdown", 1, 0, 120, toolbar);
+      pointer("pointermove", 1, 16, 160);
+      expect(captured.has(1)).toBe(true);
+
+      captured.delete(1);
+      pointer("lostpointercapture", 1, 30, 160, toolbar);
+      expect(settled).toHaveBeenCalledOnce();
+      expect(save).toHaveBeenLastCalledWith(resting());
+      expect(toolbar.dataset.dragging).toBeUndefined();
+      expect(toolbar.dataset.snapX).toBeUndefined();
+
+      save.mockClear();
+      pointer("pointermove", 1, 40, 200);
+      pointer("pointerup", 1, 50, 200);
+      pointer("lostpointercapture", 1, 60, 200, toolbar);
+      expect(save).not.toHaveBeenCalled();
+      expect(settled).toHaveBeenCalledOnce();
+    } finally {
+      close();
+    }
+  });
+});

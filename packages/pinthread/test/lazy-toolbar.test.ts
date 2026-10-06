@@ -59,6 +59,39 @@ it("keeps the touched control in place until the first touch ends", async () => 
   toolbar.unmount();
 });
 
+it("keeps the touched control while a second finger comes and goes", async () => {
+  setHover(true);
+  const element = document.body.appendChild(document.createElement("div"));
+  const toolbar = createToolbar(element, () => document.createElement("i"));
+  toolbar.render(props);
+  const control = element.querySelector(".dock__button")!;
+  const touch = (type: string, pointerId: number) =>
+    new PointerEvent(type, {
+      pointerType: "touch",
+      pointerId,
+      isPrimary: pointerId === 1,
+      bubbles: true,
+    });
+
+  element.dispatchEvent(touch("pointerenter", 1));
+  control.dispatchEvent(touch("pointerdown", 1));
+  await imported();
+
+  // The second finger lifts while the first one still holds the control.
+  vi.useFakeTimers();
+  control.dispatchEvent(touch("pointerdown", 2));
+  control.dispatchEvent(touch("pointerup", 2));
+  vi.runAllTimers();
+  vi.useRealTimers();
+  await imported();
+  expect(control.isConnected).toBe(true);
+  expect(mountToolbar).not.toHaveBeenCalled();
+
+  control.dispatchEvent(touch("pointerup", 1));
+  await vi.waitFor(() => expect(mountToolbar).toHaveBeenCalledOnce());
+  toolbar.unmount();
+});
+
 it("keeps the touched shell when the touch lands before the idle mount", async () => {
   setHover(false);
   let idle: (() => void) | undefined;

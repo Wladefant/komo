@@ -67,6 +67,9 @@ export function floatingDrag(
           !allowInteractiveStart(target))
       )
         return;
+      // A second finger is never the primary pointer. Ending the drag in
+      // progress for it would drop that drag without settling or saving.
+      if (cleanup && event.isPrimary === false) return;
       cleanup?.();
       const start = element.getBoundingClientRect();
       let moved = false,
@@ -95,6 +98,9 @@ export function floatingDrag(
           // Taken only once dragging starts so plain taps still click.
           try {
             handle.setPointerCapture(event.pointerId);
+            // The browser can take the capture away, for example for a
+            // gesture of its own. Treat that like a cancel.
+            handle.addEventListener("lostpointercapture", lost);
           } catch {
             /* The pointer may already be gone; window listeners still end it. */
           }
@@ -136,7 +142,7 @@ export function floatingDrag(
         if (!moved) return;
         const rect = element.getBoundingClientRect();
         const coast =
-          e.type !== "pointercancel" && e.timeStamp - lastT < 80 ? 120 : 0;
+          e.type === "pointerup" && e.timeStamp - lastT < 80 ? 120 : 0;
         save(
           settle(
             { x: rect.left + vx * coast, y: rect.top + vy * coast },
@@ -167,18 +173,27 @@ export function floatingDrag(
         handle.addEventListener("click", swallow, { capture: true, once: true });
         setTimeout(() => handle.removeEventListener("click", swallow, true), 0);
       };
-      cleanup = () => {
+      // A touch starts captured to the node under the finger. Taking the
+      // capture above makes that node lose it, and its event bubbles here.
+      // Only the handle's own loss ends the drag.
+      const lost = (e: PointerEvent) => {
+        if (e.target === handle) end(e);
+      };
+      const stop = () => {
         window.removeEventListener("pointermove", move, true);
         window.removeEventListener("pointerup", end, true);
         window.removeEventListener("pointercancel", end, true);
+        handle.removeEventListener("lostpointercapture", lost);
         if (handle.hasPointerCapture?.(event.pointerId))
           handle.releasePointerCapture(event.pointerId);
         delete element.dataset.dragging;
         delete element.dataset.snapX;
         delete element.dataset.snapY;
-        signal.removeEventListener("abort", cleanup!);
+        signal.removeEventListener("abort", stop);
+        if (cleanup === stop) cleanup = undefined;
       };
-      signal.addEventListener("abort", cleanup, { once: true });
+      cleanup = stop;
+      signal.addEventListener("abort", stop, { once: true });
       window.addEventListener("pointermove", move, {
         capture: true,
         passive: false,
