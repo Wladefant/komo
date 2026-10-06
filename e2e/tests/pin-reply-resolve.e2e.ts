@@ -7,7 +7,8 @@
  * Guest comments are on for the default project, so the flow signs in as a guest named "QA Guest" (nothing external).
  * The request guard allows loopback and still aborts every production and unknown host (request-guard.e2e.ts).
  * Issue: https://github.com/Wladefant/komo/issues/23
- * Touch hit areas (44 px or more): https://github.com/Wladefant/komo/issues/32, https://github.com/Wladefant/komo/issues/31
+ * Touch hit areas (44 px or more): https://github.com/Wladefant/komo/issues/32, https://github.com/Wladefant/komo/issues/31,
+ * https://github.com/Wladefant/komo/issues/36
  */
 import { test } from '@e2e-dev/web';
 import { expect } from 'e2e';
@@ -127,6 +128,8 @@ test('pin, reply and resolve: a guest places a pin, replies and resolves it, and
   await expectTouchTargets(['.draft-close', '.new-comment-composer .send']);
   await screen.getByRole('textbox', { name: 'Comment' }).fill(pinText);
   await screen.getByRole('button', { name: 'Post comment' }).tap();
+  await expect(screen.getByRole('textbox', { name: 'Your name' })).toBeVisible();
+  await expectTouchTargets(['.account .primary']);
   await screen.getByRole('textbox', { name: 'Your name' }).fill('QA Guest');
   await screen.getByRole('button', { name: 'Continue' }).tap();
 
@@ -194,7 +197,22 @@ test('pin, reply and resolve: a guest places a pin, replies and resolves it, and
 
   // Resolve: press the resolve control that belongs to this thread's id, then check the API by that id.
   await tapInThread('.card-resolve');
+  // The "Comment resolved" notice opens at once and closes after 5 s, so measure its controls before the API wait.
+  await expect(screen.getByRole('button', { name: 'Undo' })).toBeVisible();
+  await expectTouchTargets(['.floating-notice .notice-action', '.floating-notice [aria-label="Dismiss notice"]']);
   const afterResolve = await until(server, (list) => list[0]?.resolved === true, 'the thread marked resolved on the server');
   expect(afterResolve).toHaveLength(1);
   expect(afterResolve[0]?.id).toBe(threadId);
+
+  // Sidebar head and filter menu. Dismiss the notice first: on a short phone it can sit over the sidebar head.
+  await screen.getByRole('button', { name: 'Dismiss notice' }).tap();
+  await expect(screen.getByRole('button', { name: 'Undo' })).toHaveCount(0);
+  await expectTouchTargets([
+    '.selection-menu > summary.selection-trigger',
+    '.panel-head .sidebar-search-trigger',
+    '.panel-head [aria-label="Close sidebar"]',
+  ]);
+  await browser.locator('.selection-menu > summary.selection-trigger').tap();
+  await expect(screen.getByRole('menuitemradio', { name: 'Resolved' })).toBeVisible();
+  await expectTouchTargets([1, 2, 3].map((n) => `.selection-menu .comment-menu-items > :nth-child(${n})`));
 });

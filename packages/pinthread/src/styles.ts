@@ -2456,19 +2456,27 @@ textarea {
 @media (prefers-reduced-motion:reduce) {
   :host([data-sidebar="mobile"]) .panel { transition:none; }
 }
-/* Touch: give the small dialog and card icons a 44px hit area. The icons keep their size. */
+/* Touch: give the small dialog, card, sidebar, account and notice controls a 44px hit area. The icons and text keep their size. */
 @media (pointer: coarse) {
   .dialog-head .icon,
   .approved-site > .icon,
   .message > .row > .comment-menu > summary,
-  .dialog .new-comment-composer .draft-body .send { position: relative; }
+  .dialog .new-comment-composer .draft-body .send,
+  .selection-menu > summary.selection-trigger,
+  .floating-notice .icon,
+  .notice-action,
+  .account .primary { position: relative; }
   .dialog-head .icon::after,
   .draft-close::after,
   .approved-site > .icon::after,
   .message-reaction::after,
   .message > .row > .comment-menu > summary::after,
   .thread-item > .card-resolve::after,
-  .dialog .send::after {
+  .dialog .send::after,
+  .selection-menu > summary.selection-trigger::after,
+  .floating-notice .icon::after,
+  .notice-action::after,
+  .account .primary::after {
     content: "";
     position: absolute;
     left: 50%;
@@ -2488,5 +2496,8 @@ textarea {
   .message:has(> .row > .comment-menu) .message-reaction { margin-top: 20px; }
   .dialog:has(.draft-close) .new-comment-composer .draft-body { row-gap: 19px; }
   .approved-site { min-height: 44px; }
+  /* Sidebar head icons and menu rows sit edge to edge, so they grow instead. On touch they have no hover fill. */
+  .panel-head .icon { min-width: 44px; min-height: 44px; }
+  .menu-action { min-height: 44px; }
 }
 `;
