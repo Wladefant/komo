@@ -4,7 +4,7 @@
 // Per repo you change exactly two things: STAGING_HOSTS and the `app` block (url, optional command).
 // Everything else stays as in this file so `e2e_guard.py config` passes.
 import type { E2EConfig } from 'e2e';
-import { web } from '@e2e-dev/web';
+import { surfaceOf, web, type PlaywrightLiveSurface } from '@e2e-dev/web';
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -95,6 +95,20 @@ const app = {
   },
 };
 
+// One engine per viewport.
+const engines = {
+  '390x844': web({ viewport: { width: 390, height: 844 }, initScripts: [NAV_GUARD] }),
+  '390x420': web({ viewport: { width: 390, height: 420 }, initScripts: [NAV_GUARD] }),
+  '1440x900': web({ viewport: { width: 1440, height: 900 }, initScripts: [NAV_GUARD] }),
+};
+// The runner loads this file fresh, and a test that imports it gets new engines with no running attempt. So the
+// first load in a worker (the runner's) publishes its live pages here, by target name. drag-regression.e2e.ts reads
+// them to send real touch input over CDP; the `browser` fixture only has a mouse.
+declare global {
+  var pinthreadLiveSurfaces: Record<string, PlaywrightLiveSurface | undefined> | undefined;
+}
+globalThis.pinthreadLiveSurfaces ??= Object.fromEntries(Object.entries(engines).map(([name, engine]) => [name, surfaceOf(engine)]));
+
 export default {
   // Cached replay is the default. Record mode is opt-in: E2E_CACHE_MODE=read-write.
   cache: (process.env.E2E_CACHE_MODE as 'read-only' | 'read-write' | undefined) ?? 'read-only',
@@ -107,9 +121,9 @@ export default {
   },
   // Target names are the viewports. e2e_receipt.py reads them for FLOW-QA-VIEWPORTS.
   targets: [
-    { name: '390x844', engine: web({ viewport: { width: 390, height: 844 }, initScripts: [NAV_GUARD] }), app },
-    { name: '390x420', engine: web({ viewport: { width: 390, height: 420 }, initScripts: [NAV_GUARD] }), app },
-    { name: '1440x900', engine: web({ viewport: { width: 1440, height: 900 }, initScripts: [NAV_GUARD] }), app },
+    { name: '390x844', engine: engines['390x844'], app },
+    { name: '390x420', engine: engines['390x420'], app },
+    { name: '1440x900', engine: engines['1440x900'], app },
   ],
   workers: 1,
 } satisfies E2EConfig;
