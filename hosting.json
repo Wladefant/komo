@@ -5,7 +5,8 @@
   "dns": {
     "provider": "cloudflare",
     "zones": [
-      "wladefant.de"
+      "wladefant.de",
+      "pinthread.dev"
     ]
   },
   "components": [
@@ -21,7 +22,7 @@
       "name": "pinthread-api",
       "kind": "api",
       "host": "dokploy-app",
-      "url": "https://pinthread.wladefant.de",
+      "url": "https://pinthread.dev",
       "dokploy_app_id": "6z4_4dK-Ny2xt7SW9qgHZ",
       "monthly_cost_usd": null
     },

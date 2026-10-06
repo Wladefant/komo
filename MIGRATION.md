@@ -39,4 +39,4 @@ Migrations 0004, 0006 (SQLite) and `001_initial.sql` (Postgres) are unchanged, b
 
 ## Left as is on purpose
 
-Hosted config `repo` identifiers such as `tjcages/pinthread` in `server/hosted.jsonc` and `server/wrangler.jsonc` are stored data keys, not links. Changing them would orphan existing comments. `pinthread.dev` is a placeholder; the domain is not yet registered.
+Hosted config `repo` identifiers such as `tjcages/pinthread` in `server/hosted.jsonc` and `server/wrangler.jsonc` are stored data keys, not links. Changing them would orphan existing comments. `https://pinthread.dev` is the canonical origin. `https://pinthread.wladefant.de` stays allowed during the move.

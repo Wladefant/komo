@@ -7,7 +7,7 @@ Comments for your website. Point at an element, mark an area, and leave feedback
 
 Framework independent. Shared persistence. Google identities and guest reviewers.
 
-[Website](https://pinthread.dev) · [Documentation](https://pinthread.dev/install/) · [Playground](https://pinthread.dev/playground/) (`pinthread.dev` is a placeholder until the domain is registered)
+[Website](https://pinthread.dev) · [Documentation](https://pinthread.dev/install/) · [Playground](https://pinthread.dev/playground/)
 
 Review actions update immediately while saving in the background. Failed writes roll back with a notice; unsaved comment text is retained.
 
